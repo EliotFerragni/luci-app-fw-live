@@ -1,0 +1,635 @@
+#!/bin/sh
+# Capture service for luci-app-fw-live. Two feeds, one parser, one spool each.
+#
+#   denied packets    logread -f -e 'IN='      the firewall's own kernel log
+#   accepted flows    conntrack -E -e NEW      every connection that got through
+#
+# The asymmetry is the shape of netfilter, not laziness. A drop only exists as
+# an event if something logs it. An accept leaves a conntrack entry behind, and
+# that entry is confirmed only once the packet has cleared the ruleset, which
+# makes NEW a complete accept feed that costs no firewall rules and no log
+# volume. Nothing here adds a rule or inspects a packet, so flow offloading is
+# untouched.
+#
+#   fwlive-follow             run both feeds (called by /etc/init.d/fw-live)
+#   fwlive-follow --parse MODE  read one feed from stdin, for fixture replay
+#
+# The FWLIVE_ variables below set the spool directory, the clock, and the
+# defaults used when /etc/config/fw-live cannot be read. uci wins over all of
+# them on a router, so they only bite where there is no uci: running a feed by
+# hand, and the fixture replay in tests/.
+
+RUN=${FWLIVE_RUN:-/tmp/fw-live}
+
+ENABLED=${FWLIVE_ENABLED:-1}
+ACCEPTS=${FWLIVE_ACCEPTS:-1}
+DENIES=${FWLIVE_DENIES:-1}
+BUFFER_SIZE=${FWLIVE_BUFFER_SIZE:-5000}
+MAX_RATE=${FWLIVE_MAX_RATE:-200}
+IGNORE_LOCAL=${FWLIVE_IGNORE_LOCAL:-0}
+IGNORE_UNKNOWN=${FWLIVE_IGNORE_UNKNOWN:-0}
+MERGE_RULES=${FWLIVE_MERGE_RULES:-1}
+
+if [ -r /lib/functions.sh ]; then
+	. /lib/functions.sh
+	config_load fw-live 2>/dev/null
+	config_get ENABLED main enabled "$ENABLED"
+	config_get ACCEPTS main accepts "$ACCEPTS"
+	config_get DENIES main denies "$DENIES"
+	config_get BUFFER_SIZE main buffer_size "$BUFFER_SIZE"
+	config_get MAX_RATE main max_rate "$MAX_RATE"
+	config_get IGNORE_LOCAL main ignore_local "$IGNORE_LOCAL"
+	config_get IGNORE_UNKNOWN main ignore_unknown "$IGNORE_UNKNOWN"
+	config_get MERGE_RULES main merge_rules "$MERGE_RULES"
+fi
+
+case "$BUFFER_SIZE" in ''|*[!0-9]*) BUFFER_SIZE=5000 ;; esac
+case "$MAX_RATE" in ''|*[!0-9]*) MAX_RATE=200 ;; esac
+[ "$BUFFER_SIZE" -lt 100 ] && BUFFER_SIZE=100
+[ "$BUFFER_SIZE" -gt 100000 ] && BUFFER_SIZE=100000
+
+# Rewriting the spool every 200 events keeps the trim off the hot path while
+# staying well inside the buffer, so a reader never sees more than
+# buffer_size + 200 lines.
+TRIM_EVERY=200
+
+# Fed into the log stream once a second so the parser can release an event it
+# is holding back for a merge. It has to be something no log line can be.
+TICK=__fwlive_tick__
+
+mkdir -p "$RUN" || exit 1
+
+# The kernel's own timestamps are uptime, and conntrack does not stamp events
+# at all, so the parser stamps at read time. busybox awk has no time
+# functions, so it adds /proc/uptime to the boot epoch worked out here.
+UPTIME_FILE=${FWLIVE_UPTIME:-/proc/uptime}
+
+BOOT=${FWLIVE_BOOT:-}
+if [ -z "$BOOT" ]; then
+	_up=$(awk '{ print int($1); exit }' "$UPTIME_FILE" 2>/dev/null)
+	case "$_up" in ''|*[!0-9]*) _up=0 ;; esac
+	BOOT=$(( $(date +%s) - _up ))
+fi
+
+PARSER='
+function pad4(g) { while (length(g) < 4) g = "0" g; return g }
+
+# busybox awk is built without math support on some targets, so ^ is out.
+function pow2(n,   i, v) { v = 1; for (i = 0; i < n; i++) v = v * 2; return v }
+
+# Expand an IPv6 address to its 32 nibbles, so a prefix is a plain string
+# compare. Returns "" for anything it does not recognise.
+function ip6expand(a,   i, nh, nt, out, k) {
+	k = index(a, "%")
+	if (k > 0) a = substr(a, 1, k - 1)
+	if (a == "") return ""
+	i = index(a, "::")
+	if (i > 0) { _h6s = substr(a, 1, i - 1); _t6s = substr(a, i + 2) }
+	else       { _h6s = a; _t6s = "" }
+	nh = (_h6s == "") ? 0 : split(_h6s, _h6, ":")
+	nt = (_t6s == "") ? 0 : split(_t6s, _t6, ":")
+	if (i == 0 && nh != 8) return ""
+	if (nh + nt > 8) return ""
+	out = ""
+	for (k = 1; k <= nh; k++) out = out pad4(_h6[k])
+	for (k = nh + nt; k < 8; k++) out = out "0000"
+	for (k = 1; k <= nt; k++) out = out pad4(_t6[k])
+	return tolower(out)
+}
+
+function ip4num(a,   n) {
+	n = split(a, _p4, ".")
+	if (n != 4) return -1
+	if (_p4[1] !~ /^[0-9]+$/ || _p4[2] !~ /^[0-9]+$/) return -1
+	if (_p4[3] !~ /^[0-9]+$/ || _p4[4] !~ /^[0-9]+$/) return -1
+	return ((_p4[1] * 256 + _p4[2]) * 256 + _p4[3]) * 256 + _p4[4]
+}
+
+# Re-read on every trim, so a network reload is picked up without a restart.
+#
+# Split on any run of whitespace rather than on a tab. fwlive-subnets writes
+# tabs, but none of the three fields can contain whitespace, so accepting
+# spaces costs nothing and removes a silent failure: a file that lost its tabs
+# on the way here would otherwise parse as zero prefixes and report every
+# the direction of every event as unknown, with nothing saying why.
+function load_subnets(   l, n, v, b) {
+	n4 = 0; n6 = 0
+	while ((getline l < subnets) > 0) {
+		n = split(l, _sn, "[ \t]+")
+		if (n < 3) continue
+		if (_sn[1] == "4") {
+			v = ip4num(_sn[2])
+			if (v < 0 || _sn[3] + 0 < 1 || _sn[3] + 0 > 32) continue
+			n4++
+			s4blk[n4] = pow2(32 - _sn[3])
+			s4key[n4] = int(v / s4blk[n4])
+		}
+		else if (_sn[1] == "6") {
+			# Nibble granularity: a prefix length that is not a multiple of 4
+			# is rounded down. That is exact for the /64 and /56 a router
+			# hands out, and best effort for anything else.
+			b = int(_sn[3] / 4)
+			if (b < 1) continue
+			v = ip6expand(_sn[2])
+			if (v == "") continue
+			n6++
+			s6pfx[n6] = substr(v, 1, b)
+		}
+	}
+	close(subnets)
+}
+
+function is_local(a, fam,   i, v, x) {
+	if (fam == 6) {
+		x = ip6expand(a)
+		if (x == "") return 0
+		for (i = 1; i <= n6; i++)
+			if (substr(x, 1, length(s6pfx[i])) == s6pfx[i]) return 1
+		return 0
+	}
+	v = ip4num(a)
+	if (v < 0) return 0
+	# No bitwise ops in busybox awk, so the mask is a division instead.
+	for (i = 1; i <= n4; i++)
+		if (int(v / s4blk[i]) == s4key[i]) return 1
+	return 0
+}
+
+function direction(sa, da, fam,   ls, ld) {
+	if (n4 + n6 == 0) return "-"
+	ls = is_local(sa, fam)
+	ld = is_local(da, fam)
+	if (ls && ld) return "local"
+	if (ls) return "out"
+	if (ld) return "in"
+	return "-"
+}
+
+# Wall clock seconds, as boot epoch plus uptime, because busybox awk has no
+# time functions. The uptime source is a variable rather than a literal so a
+# replay can pin it: the rate limiter counts per second, and a clock that ticks
+# midway through reading a captured flood gives the next second a fresh budget
+# and lets a few more events through. Real behaviour, but it made the test for
+# it fail about one run in twenty.
+function now(   l, t) {
+	t = 0
+	if ((getline l < uptime_file) > 0) {
+		split(l, _up, " ")
+		t = int(_up[1])
+	}
+	close(uptime_file)
+	return boot + t
+}
+
+function dash(v) {
+	if (v == "") return "-"
+	gsub(/[\t\r\n]/, " ", v)
+	return v
+}
+
+function write_stats() {
+	printf "shed %d\ntrimmed %d\nseq %d\nmerged %d\n", shed, trimmed, seq, merged > stats
+	fflush(stats)
+	close(stats)
+}
+
+# Keep the newest buffer_size lines by rewriting the spool and renaming it in.
+# The writer closes the spool between events, so it holds no stale descriptor
+# and a reader never sees a half written file. An in place truncate would.
+function trim(   l, n, i) {
+	for (i = 0; i < keep; i++) delete _ring[i]
+	n = 0
+	while ((getline l < spool) > 0) { _ring[n % keep] = l; n++ }
+	close(spool)
+	if (n <= keep) return
+	trimmed += n - keep
+	for (i = 0; i < keep; i++)
+		print _ring[(n + i) % keep] > tmpspool
+	close(tmpspool)
+	system("mv -f " tmpspool " " spool)
+}
+
+# One packet can be logged twice: once by the rule it matched, whose prefix is
+# only a name, and again by the chain that actually refused it, whose prefix
+# carries the verdict. Neither line alone says both things. Holding a verdictless
+# event until the next line arrives lets the two become one row with the rule
+# name and the real verdict.
+#
+# One slot, not a ring: the two lines are the same packet still travelling
+# through the ruleset, so they arrive back to back. Anything that does not pair
+# immediately is released unchanged, which is the old behaviour, so the worst a
+# missed pairing costs is the row it would have merged into.
+function pending_release() {
+	if (!pend_valid) return
+	pend_valid = 0
+	e_verdict = pend_verdict; e_fam = pend_fam; e_proto = pend_proto
+	e_saddr = pend_saddr; e_sport = pend_sport
+	e_daddr = pend_daddr; e_dport = pend_dport
+	e_iif = pend_iif; e_oif = pend_oif
+	e_rule = pend_rule; e_extra = pend_extra
+	flush_event()
+}
+
+function flush_event(   t, dir, ln) {
+	# Before the rate counter, not after: an event nobody wants must not eat
+	# into the budget that keeps real events flowing during a flood.
+	if (ignore_unknown && e_verdict == "unknown") return
+	t = now()
+	if (t != cur_sec) { cur_sec = t; cur_n = 0 }
+	cur_n++
+	# A misconfigured log rule on a busy router must not be able to wedge the
+	# box, so past max_rate per second the excess is counted and dropped.
+	if (max_rate > 0 && cur_n > max_rate) {
+		shed++
+		if (t - last_warn >= 60) {
+			last_warn = t
+			system("logger -t fw-live \"shedding " mode " events: over " max_rate "/s, " shed " dropped so far\"")
+			write_stats()
+		}
+		return
+	}
+	dir = direction(e_saddr, e_daddr, e_fam)
+	if (ignore_local && dir == "local") return
+	seq++
+	ln = t "\t" seq "\t" mode "\t" e_verdict "\t" e_fam "\t" dash(e_proto) "\t" \
+	     dash(e_saddr) "\t" dash(e_sport) "\t" dash(e_daddr) "\t" dash(e_dport) "\t" \
+	     dash(e_iif) "\t" dash(e_oif) "\t" dir "\t" dash(e_rule) "\t" dash(e_extra)
+	# Append, flush and close per event: this is a live tail, so batching the
+	# writes would defeat the point, and closing is what keeps trim() safe.
+	print ln >> spool
+	fflush(spool)
+	close(spool)
+	since++
+	if (since >= trim_every) {
+		since = 0
+		load_subnets()
+		trim()
+		write_stats()
+	}
+}
+
+BEGIN {
+	keep = keep + 0
+	trim_every = trim_every + 0
+	max_rate = max_rate + 0
+	ignore_local = ignore_local + 0
+	ignore_unknown = ignore_unknown + 0
+	if (keep < 100) keep = 100
+	if (trim_every < 10) trim_every = 10
+	seq = 0; shed = 0; trimmed = 0; since = 0; merged = 0
+	pend_valid = 0
+	merge_rules = merge_rules + 0
+	cur_sec = 0; cur_n = 0; last_warn = 0
+	load_subnets()
+	write_stats()
+	# Make sure the spool exists even for a feed that never produces an event,
+	# so a reader finds an empty file rather than a missing one. The service
+	# truncates both at startup; this is what covers --parse.
+	printf "" >> spool
+	fflush(spool)
+	close(spool)
+}
+
+mode == "log" && $0 == tick { pending_release(); next }
+
+# The kernel firewall log line is
+#   <prefix>IN=… OUT=… MAC=… SRC=… DST=… PROTO=… SPT=… DPT=…
+# and IPv6 uses the same key names, so one parser covers both families. Keys
+# are located by name, never by position.
+mode == "log" {
+	pos = index($0, " IN=")
+	if (pos == 0) next
+	head = substr($0, 1, pos)
+	rest = substr($0, pos + 1)
+
+	k = index(head, "kernel: ")
+	if (k > 0) pfx = substr(head, k + 8)
+	else {
+		k = index(head, "] ")
+		pfx = (k > 0) ? substr(head, k + 2) : head
+	}
+	# the kernel uptime stamp, which we do not trust and do not want
+	if (substr(pfx, 1, 1) == "[") {
+		k = index(pfx, "] ")
+		if (k > 0) pfx = substr(pfx, k + 2)
+	}
+	sub(/^[ \t]+/, "", pfx)
+	sub(/[: \t]+$/, "", pfx)
+
+	nf = split(rest, FL, " ")
+	xin = ""; xout = ""; xsrc = ""; xdst = ""; xproto = ""
+	xspt = ""; xdpt = ""; xtype = ""; xcode = ""; xflags = ""
+	xphysin = ""; xphysout = ""; xipid = ""
+	for (t = 1; t <= nf; t++) {
+		f = FL[t]
+		# An ICMP error carries the header of the offending packet in
+		# brackets. Only its first key gets the [, so the rest of it would
+		# otherwise be read as the outer packet: SPT and DPT above all, which
+		# an ICMP packet does not have. Everything from the bracket on belongs
+		# to the quoted header, so stop there.
+		if (substr(f, 1, 1) == "[") break
+		e = index(f, "=")
+		if (e > 0) {
+			kk = substr(f, 1, e - 1)
+			vv = substr(f, e + 1)
+			if (kk == "IN") { if (xin == "") xin = vv }
+			else if (kk == "OUT") { if (xout == "") xout = vv }
+			else if (kk == "PHYSIN") { if (xphysin == "") xphysin = vv }
+			else if (kk == "PHYSOUT") { if (xphysout == "") xphysout = vv }
+			else if (kk == "SRC") { if (xsrc == "") xsrc = vv }
+			else if (kk == "DST") { if (xdst == "") xdst = vv }
+			else if (kk == "PROTO") { if (xproto == "") xproto = vv }
+			else if (kk == "SPT") { if (xspt == "") xspt = vv }
+			else if (kk == "DPT") { if (xdpt == "") xdpt = vv }
+			else if (kk == "ID") { if (xipid == "") xipid = vv }
+			else if (kk == "TYPE") { if (xtype == "") xtype = vv }
+			else if (kk == "CODE") { if (xcode == "") xcode = vv }
+		}
+		else if (f == "SYN" || f == "ACK" || f == "FIN" || f == "RST" || f == "PSH" || f == "URG")
+			xflags = (xflags == "") ? f : xflags "," f
+	}
+	if (xsrc == "") next
+
+	pl = tolower(xproto)
+	if (pl == "ipv6-icmp") pl = "icmpv6"
+
+	# The verdict is in the prefix text, because the log line itself does not
+	# carry one. That works only because fw4 writes the word into the prefixes
+	# it generates itself: "reject wan in: ", "drop wan invalid ct state: ".
+	#
+	# Any other prefix is a label chosen by a person, not a fact. A rule
+	# logged through option log carries only its own name, names are not
+	# unique, and option log_prefix can set it to anything; one rule called
+	# Block-Internet was seen logging both traffic it allowed and traffic
+	# it refused under that one prefix. So do not extend this to match
+	# "accept": a rule called No-Accept-From-Guest would then read as one. And
+	# do not default the rest to "drop", which would paint a red Dropped chip
+	# on connections that were allowed. What is not stated is unknown, and the
+	# raw prefix is kept rather than discarded.
+	lp = tolower(pfx)
+	if (index(lp, "reject") > 0) nverdict = "reject"
+	else if (index(lp, "drop") > 0) nverdict = "drop"
+	else nverdict = "unknown"
+
+	nfam = (index(xsrc, ":") > 0) ? 6 : 4
+	# On a bridge, IN and OUT are the bridge and PHYSIN/PHYSOUT are the ports
+	# it came from and went to. Keeping only the bridge would make one
+	# broadcast, flooded to four ports, four rows identical in every column,
+	# with nothing on screen to say why there are four. Recorded as
+	# bridge/port so the record keeps its fixed fifteen columns.
+	niif = xin
+	if (xphysin != "" && xphysin != xin) niif = xin "/" xphysin
+	noif = xout
+	if (xphysout != "" && xphysout != xout) noif = xout "/" xphysout
+	if (pl == "icmp" || pl == "icmpv6")
+		nextra = (xtype == "") ? "" : xtype "/" xcode
+	else
+		nextra = xflags
+
+	# What makes two lines the same packet. The IP ID is the strong part of
+	# it; IPv6 has none unless the packet is fragmented, which leaves the
+	# five tuple, and that is enough for two lines this close together.
+	#
+	# The interfaces are in the key and have to be: a broadcast flooded to
+	# four bridge ports is four copies of one packet, sharing an IP ID and a
+	# five tuple and differing only in PHYSOUT. They are four forwarding
+	# decisions, not one packet logged four times, and must stay four rows.
+	nkey = nfam SUBSEP pl SUBSEP xsrc SUBSEP xspt SUBSEP xdst SUBSEP xdpt \
+	       SUBSEP xipid SUBSEP niif SUBSEP noif
+
+	if (merge_rules && nverdict == "unknown") {
+		# A packet can match more than one rule that logs, each writing its
+		# own name and none of them a verdict. That is still one packet, so
+		# it stays one row and the names become the path it took through the
+		# ruleset. Capped, because nothing bounds how many rules can log.
+		if (pend_valid && nkey == pend_key) {
+			if (pfx != "" && length(pend_rule) + length(pfx) + 3 <= 96)
+				pend_rule = pend_rule " > " pfx
+			merged++
+			next
+		}
+		pending_release()
+		pend_valid = 1; pend_key = nkey
+		pend_verdict = nverdict; pend_fam = nfam; pend_proto = pl
+		pend_saddr = xsrc; pend_sport = xspt
+		pend_daddr = xdst; pend_dport = xdpt
+		pend_iif = niif; pend_oif = noif
+		pend_rule = pfx; pend_extra = nextra
+		next
+	}
+
+	if (merge_rules && pend_valid && nkey == pend_key && pend_rule != "") {
+		# The verdict from this line, the rule name from the held one.
+		nrule = pend_rule
+		pend_valid = 0
+		merged++
+	}
+	else {
+		pending_release()
+		nrule = pfx
+	}
+
+	e_verdict = nverdict; e_fam = nfam; e_proto = pl
+	e_saddr = xsrc; e_sport = xspt; e_daddr = xdst; e_dport = xdpt
+	e_iif = niif; e_oif = noif
+	e_rule = nrule; e_extra = nextra
+	flush_event()
+	next
+}
+
+# conntrack -E -e NEW prints
+#   [NEW] tcp 6 120 SYN_SENT src=… dst=… sport=… dport=… [UNREPLIED] src=… …
+# The reply tuple repeats the same keys reversed, so the first of each wins.
+mode == "ct" {
+	if ($1 != "[NEW]") next
+	pl = tolower($2)
+	if (pl == "" || pl == "unknown") pl = $3
+	if (pl == "ipv6-icmp") pl = "icmpv6"
+	xsrc = ""; xdst = ""; xspt = ""; xdpt = ""; xtype = ""; xcode = ""
+	for (t = 4; t <= NF; t++) {
+		f = $t
+		e = index(f, "=")
+		if (e <= 0) continue
+		kk = substr(f, 1, e - 1)
+		vv = substr(f, e + 1)
+		if (kk == "src") { if (xsrc == "") xsrc = vv }
+		else if (kk == "dst") { if (xdst == "") xdst = vv }
+		else if (kk == "sport") { if (xspt == "") xspt = vv }
+		else if (kk == "dport") { if (xdpt == "") xdpt = vv }
+		else if (kk == "type") { if (xtype == "") xtype = vv }
+		else if (kk == "code") { if (xcode == "") xcode = vv }
+	}
+	if (xsrc == "" || xdst == "") next
+	e_verdict = "accept"
+	e_fam = (index(xsrc, ":") > 0) ? 6 : 4
+	e_proto = pl
+	e_saddr = xsrc; e_sport = xspt; e_daddr = xdst; e_dport = xdpt
+	# conntrack knows nothing about interfaces or which rule let it through.
+	e_iif = ""; e_oif = ""; e_rule = ""
+	e_extra = (xtype == "") ? "" : xtype "/" xcode
+	flush_event()
+	next
+}
+
+# A held event is released by the next line to arrive, so on a quiet log it
+# would sit there unseen. The follower feeds this in once a second to nudge it.
+END {
+	pending_release()
+	write_stats()
+}
+'
+
+parse() {
+	# $1 = log | ct
+	awk -v mode="$1" \
+	    -v spool="$RUN/events.$1" \
+	    -v tmpspool="$RUN/events.$1.new" \
+	    -v stats="$RUN/stats.$1" \
+	    -v subnets="$RUN/subnets" \
+	    -v boot="$BOOT" \
+	    -v uptime_file="$UPTIME_FILE" \
+	    -v keep="$BUFFER_SIZE" \
+	    -v trim_every="$TRIM_EVERY" \
+	    -v max_rate="$MAX_RATE" \
+	    -v ignore_local="$IGNORE_LOCAL" \
+	    -v ignore_unknown="$IGNORE_UNKNOWN" \
+	    -v merge_rules="$MERGE_RULES" \
+	    -v tick="$TICK" \
+	    "$PARSER"
+}
+
+case "$1" in
+	--parse)
+		[ "$2" = log ] || [ "$2" = ct ] || { echo "usage: fwlive-follow --parse log|ct" >&2; exit 2; }
+		parse "$2"
+		exit $?
+		;;
+esac
+
+[ "$ENABLED" = 1 ] || { logger -t fw-live "disabled in /etc/config/fw-live"; exit 0; }
+
+# Anything still running from a previous life is a leftover: procd starts one
+# instance and this is it. A follower that was killed outright, rather than
+# asked to stop, leaves a reader and a parser behind, and those would go on
+# writing to a spool this instance is about to truncate. Anchored to the end of
+# the command line so a hand run fwlive-follow --parse is left alone, and taken
+# from $0 rather than written out, so it finds the right processes wherever the
+# script is run from.
+for _old in $(pgrep -f "$0\$" 2>/dev/null); do
+	[ "$_old" = "$$" ] && continue
+	kill -TERM "$_old" 2>/dev/null
+done
+
+: > "$RUN/events.log"
+: > "$RUN/events.ct"
+rm -f "$RUN/events.log.new" "$RUN/events.ct.new" "$RUN/stats.log" "$RUN/stats.ct"
+
+[ -s "$RUN/subnets" ] || /usr/bin/fwlive-subnets >/dev/null 2>&1
+
+# Each feed gets its own spool, so there is exactly one writer per file and no
+# locking anywhere.
+#
+# A feed is a reader writing into a fifo and the parser reading it back out,
+# rather than the plain `reader | parser` pipeline it looks like it should be.
+# The reason is shutdown: in a pipeline the reader's pid is not recoverable,
+# and `logread -f` can sit for hours without writing a byte, so it never
+# notices its pipe was closed. One left behind per service restart is a real
+# leak. Through a fifo both pids are known and both can be ended.
+FIFO_LOG=$RUN/feed.log
+FIFO_CT=$RUN/feed.ct
+
+run_feed() {
+	# $1 = log|ct, $2 = fifo, everything after that is the reader command
+	_mode=$1
+	_fifo=$2
+	shift 2
+	rm -f "$_fifo"
+	mkfifo "$_fifo" 2>/dev/null || return 1
+	# Deliberately no trap in here. This loop spends its life blocked on the
+	# parser as a foreground child, and a shell that has a handler for a
+	# signal defers it until that child returns. The parser only returns at
+	# end of file, which only happens once the reader is gone, which is what
+	# the handler was going to do: the feed would hang instead of stopping.
+	# Without a handler SIGTERM ends it outright, and the parent below kills
+	# the reader so the orphaned parser sees end of file and follows.
+	while :; do
+		"$@" > "$_fifo" 2>/dev/null &
+		_rpid=$!
+		echo "$_rpid" > "$RUN/reader.$_mode.pid"
+
+		# The parser can be holding an event back waiting to merge it with the
+		# next line, so on a quiet log it needs waking. The ticker keeps the
+		# fifo open for its whole life rather than reopening per tick, because
+		# a moment with no writer at all is end of file to the reader, and it
+		# stops when the reader does so that a dead feed still ends up as end
+		# of file and restarts.
+		if [ "$_mode" = log ] && [ "$MERGE_RULES" = 1 ]; then
+			( exec > "$_fifo"
+			  while kill -0 "$_rpid" 2>/dev/null; do
+				sleep 1
+				echo "$TICK"
+			  done ) &
+			echo $! > "$RUN/ticker.$_mode.pid"
+		fi
+
+		# The parser runs in the foreground, so it returns when the reader
+		# stops and the loop brings the pair back up together.
+		parse "$_mode" < "$_fifo"
+		kill "$(cat "$RUN/reader.$_mode.pid" 2>/dev/null)" 2>/dev/null
+		kill "$(cat "$RUN/ticker.$_mode.pid" 2>/dev/null)" 2>/dev/null
+		wait
+		sleep 5
+	done
+}
+
+PID_LOG=
+PID_CT=
+
+if [ "$DENIES" = 1 ]; then
+	run_feed log "$FIFO_LOG" logread -f -e 'IN=' &
+	PID_LOG=$!
+fi
+
+if [ "$ACCEPTS" = 1 ]; then
+	if command -v conntrack >/dev/null 2>&1; then
+		run_feed ct "$FIFO_CT" conntrack -E -e NEW &
+		PID_CT=$!
+	else
+		logger -t fw-live "conntrack not installed, accepted connections will not be captured"
+	fi
+fi
+
+[ -n "$PID_LOG$PID_CT" ] || {
+	logger -t fw-live "neither feed is enabled, nothing to do"
+	exit 0
+}
+
+kill_reader() {
+	for _f in "$RUN/ticker.$1.pid" "$RUN/reader.$1.pid"; do
+		_r=$(cat "$_f" 2>/dev/null)
+		case "$_r" in
+			''|*[!0-9]*) ;;
+			*) kill -TERM "$_r" 2>/dev/null ;;
+		esac
+	done
+}
+
+shutdown() {
+	# The feeds first, which having no handler die at once rather than
+	# waiting on the parser they are blocked reading. That orphans each
+	# parser, and killing the readers below is what gives it the end of file
+	# it needs to follow them.
+	kill -TERM $PID_LOG $PID_CT 2>/dev/null
+	kill_reader log
+	kill_reader ct
+	rm -f "$FIFO_LOG" "$FIFO_CT" "$RUN/reader.log.pid" "$RUN/reader.ct.pid" \
+	      "$RUN/ticker.log.pid" "$RUN/ticker.ct.pid"
+	exit 0
+}
+trap shutdown INT TERM
+
+logger -t fw-live "capture started (accepts=$ACCEPTS denies=$DENIES buffer=$BUFFER_SIZE ignore_unknown=$IGNORE_UNKNOWN merge_rules=$MERGE_RULES)"
+
+wait
+
+exit 0

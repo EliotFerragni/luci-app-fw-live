@@ -1,0 +1,70 @@
+#!/bin/sh
+# Refresh /tmp/fw-live/subnets, the list of prefixes that count as "local"
+# when the follower decides whether an event is inbound, outbound or
+# router-to-router traffic.
+#
+# One prefix per line, tab separated:
+#
+#	4	192.168.1.1	24
+#	6	fd00:1234::1	64
+#
+# The address is whatever the interface holds; the follower masks it down to
+# the prefix itself, so there is no need to do that here.
+
+RUN=/tmp/fw-live
+OUT="$RUN/subnets"
+
+mkdir -p "$RUN" || exit 1
+
+emit() {
+	# ubus prints one JSON object per match; the address and its mask always
+	# travel together in the same object, so they cannot be paired wrongly.
+	awk '
+		{
+			a = ""; m = ""
+			if (match($0, /"address"[ \t]*:[ \t]*"[^"]*"/)) {
+				a = substr($0, RSTART, RLENGTH)
+				sub(/^"address"[ \t]*:[ \t]*"/, "", a)
+				sub(/"$/, "", a)
+			}
+			if (match($0, /"mask"[ \t]*:[ \t]*[0-9]+/)) {
+				m = substr($0, RSTART, RLENGTH)
+				sub(/^"mask"[ \t]*:[ \t]*/, "", m)
+			}
+			if (a == "" || m == "") next
+			fam = (index(a, ":") > 0) ? 6 : 4
+			if (m + 0 < 1) next
+			if (fam == 4 && m + 0 > 32) next
+			if (fam == 6 && m + 0 > 128) next
+			print fam "\t" a "\t" m + 0
+		}
+	'
+}
+
+{
+	# Every address the router itself holds, plus the prefixes it delegates,
+	# which is what makes a LAN host on a delegated /64 count as local.
+	ubus call network.interface dump 2>/dev/null | jsonfilter \
+		-e '@.interface[*]["ipv4-address"][*]' \
+		-e '@.interface[*]["ipv6-address"][*]' \
+		-e '@.interface[*]["ipv6-prefix"][*]' \
+		-e '@.interface[*]["ipv6-prefix-assignment"][*]' 2>/dev/null | emit
+
+	# The router talking to itself is local by definition, and neither
+	# loopback nor link-local shows up in the interface dump.
+	printf '4\t127.0.0.1\t8\n'
+	printf '6\t::1\t128\n'
+	printf '6\tfe80::\t10\n'
+} | sort -u > "$OUT.new" 2>/dev/null
+
+if [ -s "$OUT.new" ]; then
+	mv "$OUT.new" "$OUT"
+else
+	rm -f "$OUT.new"
+	# Better no file than an empty one: the follower reports direction as
+	# unknown rather than calling everything foreign.
+	[ -f "$OUT" ] || : > "$OUT"
+	exit 1
+fi
+
+exit 0
