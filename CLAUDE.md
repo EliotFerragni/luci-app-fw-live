@@ -334,7 +334,9 @@ gawk in the ways that matter. It covers:
 
 - **fixture replay**: the captured feed text through the real parser, diffed
   against a checked in expected file. `tests/fixtures/README.md` explains
-  where those captures come from and how to replace them.
+  where those captures come from, how to replace them, and how their MAC and
+  IP addresses are rewritten before they are checked in. A capture off a live
+  router is somebody's traffic; keep it that way.
 - **rate limit and trim**: a flood through the real parser, checking what is
   shed, what is kept and that nothing is lost or duplicated.
 - **synthetic buffer**: generated event lines through the real `fwlive-query`,

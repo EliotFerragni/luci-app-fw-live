@@ -30,6 +30,8 @@ accepted connections, over five local prefixes, which is what gives the
 direction column a real mix to be right about rather than one subnet. This is what pins the parser to the log format this fw4
 really emits: the combined `MAC=` field rather than `MACSRC`/`MACDST`, a
 `PHYSIN=` on bridged paths, a trailing `MARK=`, and prefixes ending in `": "`.
+Its addresses have been rewritten, as every real capture here has; see
+"Capturing another case" below for what that means and why.
 
 **`synthetic`** is written by hand. It exists because one capture window is
 not a specification: the router capture contains no IPv6 at all, no ICMP in
@@ -73,6 +75,31 @@ it records what that firewall was configured to log at the time.
     ./tests/run-tests.sh --bless      # only after reading the new output
 
 Add the name to `CASES` in `tests/run-tests.sh`.
+
+**Anonymise the capture before blessing it.** A capture off a live router
+carries the MAC address of every device that spoke and the address of
+everything they contacted. Rewrite those before the expected files are
+generated, so that both sides of the diff agree:
+
+| what | becomes |
+| --- | --- |
+| a MAC address | `00:00:5e:00:53:NN`, the range RFC 7042 reserves for documentation |
+| a routable IPv4 address | one in `192.0.2.0/24`, `198.51.100.0/24` or `203.0.113.0/24` |
+| a global IPv6 address | one under `2001:db8::/32` |
+| the site's ULA prefix | `fd00:db8:1:1::/64` |
+
+Zone, rule and interface names are rewritten too, to ordinary ones: `lan`,
+`wan`, `guest`, `iot`, `br-lan`, `wlan0`, `Block-Internet`. They describe how
+one site is built rather than who is on it, but a capture is easier to read
+when the names are the ones every router has.
+
+Map each distinct address to a distinct replacement and apply it to every file
+in the case, or the merge key and the direction column stop meaning what they
+meant on the router. Two things must survive untouched: multicast and
+broadcast addresses, which are protocol constants rather than anyone's, and
+RFC 1918 addresses, which say nothing about whose network they are. Keep the
+replacements out of every subnets file's local prefixes unless the address
+really was local, since direction is decided by that comparison.
 
 `--bless` rewrites the expected files from whatever the parser currently does,
 so read its output before committing it: it records behaviour, it does not

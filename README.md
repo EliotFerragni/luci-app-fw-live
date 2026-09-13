@@ -341,9 +341,9 @@ checkbox for that is in Settings.
 | Rule | the firewall log prefix. Empty for most accepted connections, as above |
 
 The interfaces under Direction are written `bridge/port` where the packet
-crossed a bridge, so `br-lan/wlan0` means it arrived on the `br-lan`
-bridge from the `wlan0` radio. That is often the most useful thing on the
-row: it tells you which access point a client is actually on. It also keeps a
+crossed a bridge, so `br-lan/wlan0` means it arrived on the `br-lan` bridge
+from the `wlan0` radio. That is often the most useful thing on the row: it
+tells you which access point a client is actually on. It also keeps a
 broadcast honest, since one of those is logged once per bridge port it is
 flooded to and the port is the only thing telling those rows apart.
 
