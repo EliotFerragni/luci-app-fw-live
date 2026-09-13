@@ -1,0 +1,168 @@
+#!/bin/sh
+# List and change firewall logging, and nothing else.
+#
+#   fwlive-logging --list                print zones and rules with their log state, as JSON
+#   fwlive-logging --set SECT=0|1 ...    set option log on those sections, commit, reload
+#
+# This is the one place in the package that writes /etc/config/firewall, and
+# it writes exactly one option. `log` is the only firewall option that cannot
+# change what happens to a packet: it decides whether a line is written, not
+# whether traffic passes. Nothing here can cost you remote access, and nothing
+# here touches any other option. Keep it that way.
+#
+# SECT is a uci section identifier, either @zone[N] / @rule[N] or a named
+# section. It is checked against the running config and rejected unless it is
+# really a zone or a rule.
+
+RUN=${FWLIVE_RUN:-/tmp/fw-live}
+# A variable so the tests can point it at a stub, like the other FWLIVE_ ones.
+FW_INIT=${FWLIVE_FW_INIT:-/etc/init.d/firewall}
+
+usage() {
+	echo "usage: fwlive-logging --list | --set SECT=0|1 [SECT=0|1 ...]" >&2
+	exit 2
+}
+
+command -v uci >/dev/null 2>&1 || {
+	echo '{"error":"uci is not available"}'
+	exit 1
+}
+
+# tr strips the quotes uci show puts round values.
+dump() { uci -q show firewall 2>/dev/null | tr -d "\047"; }
+
+list() {
+	dump | awk '
+	function jstr(s,   i, c, out) {
+		out = ""
+		for (i = 1; i <= length(s); i++) {
+			c = substr(s, i, 1)
+			if (c == "\"" || c == "\\") out = out "\\" c
+			else if (c ~ /[[:cntrl:]]/) out = out " "
+			else out = out c
+		}
+		return out
+	}
+	BEGIN { FS = "="; nsect = 0 }
+	{
+		key = $1
+		val = $0
+		sub(/^[^=]*=/, "", val)
+		if (key !~ /^firewall\./) next
+		rest = substr(key, 10)
+		d = index(rest, ".")
+		sect = (d > 0) ? substr(rest, 1, d - 1) : rest
+		opt = (d > 0) ? substr(rest, d + 1) : ""
+		if (!(sect in seen)) { seen[sect] = 1; nsect++; order[nsect] = sect }
+		if (opt == "") type[sect] = val
+		else if (opt == "name") name[sect] = val
+		else if (opt == "log") logopt[sect] = val
+		else if (opt == "target") target[sect] = toupper(val)
+		else if (opt == "enabled") enabled[sect] = val
+	}
+	function emit(s,   n) {
+		n = (name[s] != "") ? name[s] : s
+		printf "%s{\"sect\":\"%s\",\"name\":\"%s\",\"log\":%d", \
+			sep, jstr(s), jstr(n), (logopt[s] == "1") ? 1 : 0
+		if (type[s] == "rule")
+			printf ",\"target\":\"%s\",\"denies\":%s,\"enabled\":%s", \
+				jstr(target[s]), \
+				((target[s] == "REJECT" || target[s] == "DROP") ? "true" : "false"), \
+				((enabled[s] == "0") ? "false" : "true")
+		printf "}"
+		sep = ","
+	}
+	END {
+		printf "{\"zones\":["
+		sep = ""
+		for (i = 1; i <= nsect; i++) if (type[order[i]] == "zone") emit(order[i])
+		printf "],\"rules\":["
+		sep = ""
+		for (i = 1; i <= nsect; i++) if (type[order[i]] == "rule") emit(order[i])
+		printf "]}\n"
+	}'
+}
+
+# The type of a section, empty if it does not exist.
+type_of() {
+	uci -q get "firewall.$1" 2>/dev/null
+}
+
+apply() {
+	# Anything already staged in this package gets committed along with our
+	# change, because uci commits a package at a time. Report it rather than
+	# silently applying someone else's half finished edit.
+	_staged=$(uci -q changes firewall 2>/dev/null | grep -c . | tr -d ' ')
+	case "$_staged" in ''|*[!0-9]*) _staged=0 ;; esac
+
+	_changed=0
+	_errors=""
+
+	for _arg in "$@"; do
+		case "$_arg" in
+			*=0|*=1) ;;
+			*) _errors="$_errors \"bad argument\""; continue ;;
+		esac
+		_sect=${_arg%=*}
+		_want=${_arg##*=}
+
+		case "$_sect" in
+			'' | *[!A-Za-z0-9_@\[\]-]* )
+				_errors="$_errors \"bad section name\""
+				continue ;;
+		esac
+
+		_type=$(type_of "$_sect")
+		if [ "$_type" != "zone" ] && [ "$_type" != "rule" ]; then
+			_errors="$_errors \"$_sect is not a firewall zone or rule\""
+			continue
+		fi
+
+		_have=$(uci -q get "firewall.$_sect.log" 2>/dev/null)
+		[ "$_have" = "1" ] && _have=1 || _have=0
+		[ "$_have" = "$_want" ] && continue
+
+		if [ "$_want" = "1" ]; then
+			uci set "firewall.$_sect.log=1" || {
+				_errors="$_errors \"could not set log on $_sect\""
+				continue
+			}
+		else
+			# Remove the option rather than set it to 0, so the config goes
+			# back to how it looked before rather than accumulating cruft.
+			uci -q delete "firewall.$_sect.log" 2>/dev/null
+		fi
+		_changed=$((_changed + 1))
+	done
+
+	if [ "$_changed" -gt 0 ]; then
+		if uci commit firewall; then
+			"$FW_INIT" reload >/dev/null 2>&1 ||
+				_errors="$_errors \"the firewall did not reload cleanly\""
+		else
+			uci -q revert firewall
+			_errors="$_errors \"could not commit, nothing was changed\""
+			_changed=0
+		fi
+	fi
+
+	printf '{"changed":%d,"staged":%d,"errors":[%s]}\n' \
+		"$_changed" "$_staged" "$(echo "$_errors" | sed 's/^ //; s/" "/","/g')"
+}
+
+case "$1" in
+	--list)
+		[ $# -eq 1 ] || usage
+		list
+		;;
+	--set)
+		shift
+		[ $# -ge 1 ] || usage
+		apply "$@"
+		;;
+	*)
+		usage
+		;;
+esac
+
+exit 0
