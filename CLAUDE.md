@@ -315,7 +315,15 @@ shell, so nothing else can reach a command line.
   `/etc/config/fw-live` cannot be read. uci wins over them on a router, so
   they only bite off-router, which is what makes the parser testable.
 - Build with `./build-ipk.sh`. It needs no OpenWrt SDK. The package is
-  `PKGARCH:=all` because it contains no compiled code.
+  `PKGARCH:=all` because it contains no compiled code. It reads the version,
+  the metadata, the dependencies, the conffiles and all three maintainer
+  scripts back out of the package Makefile rather than keeping a second copy,
+  because a second copy is how the two silently drift, and the copy that
+  matters is the script: releases are built with it and not with the SDK. The
+  same reason `install.sh` derives its file list from the files tree.
+- `prerm` disables the service only on a real removal, never on an upgrade.
+  opkg passes `upgrade` as `$1` then, and disabling would leave the service off
+  for good if the install died before the new `postinst` ran.
 
 ## Testing without a router
 

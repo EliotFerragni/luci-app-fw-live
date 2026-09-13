@@ -4,80 +4,74 @@
 # box (or on the router itself) from the directory holding this script.
 #
 #   ./build-ipk.sh  ->  luci-app-fw-live_<version>_all.ipk
+#
+# Everything that the package Makefile also states is read back out of it:
+# version, metadata, dependencies, conffiles and the three maintainer scripts.
+# Keeping a second copy here is how the two silently drift, and the copy that
+# matters is this one, since releases are built with this script and not with
+# the SDK.
 
 set -e
 
-SRC=$(cd "$(dirname "$0")" && pwd)/package/luci-app-fw-live
-VERSION=$(sed -n 's/^PKG_VERSION:=//p' "$SRC/Makefile")
-RELEASE=$(sed -n 's/^PKG_RELEASE:=//p' "$SRC/Makefile")
-OUT="luci-app-fw-live_${VERSION}-${RELEASE}_all.ipk"
+PKG=luci-app-fw-live
+SRC=$(cd "$(dirname "$0")" && pwd)/package/$PKG
+MK="$SRC/Makefile"
+
+# A plain `NAME:=value' from the Makefile, indented or not.
+mkvar() {
+	sed -n "s/^[[:space:]]*$1:=[[:space:]]*//p" "$MK" | head -n1
+}
+
+# The body of a `define Package/<pkg>/<name>' block. OpenWrt writes these out
+# after make has expanded them, which turns every $$ back into a single $, so
+# do the same here. Nothing in these blocks uses the $(...) forms, which this
+# deliberately does not try to handle.
+mkdefine() {
+	sed -n "/^define Package\/$PKG\/$1\$/,/^endef\$/p" "$MK" |
+		sed -e '1d' -e '$d' -e 's/\$\$/$/g'
+}
+
+VERSION=$(mkvar PKG_VERSION)
+RELEASE=$(mkvar PKG_RELEASE)
+OUT="${PKG}_${VERSION}-${RELEASE}_all.ipk"
+
+# +luci-base +rpcd-mod-ucode ... -> luci-base, rpcd-mod-ucode, ...
+DEPENDS=$(mkvar DEPENDS | sed -e 's/+//g' -e 's/[[:space:]][[:space:]]*/, /g')
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/data" "$WORK/control"
 
 cp -a "$SRC/files/." "$WORK/data/"
-chmod 0755 "$WORK/data/etc/init.d/fw-live" \
-           "$WORK/data/usr/bin/fwlive-follow" \
-           "$WORK/data/usr/bin/fwlive-logging" \
-           "$WORK/data/usr/bin/fwlive-query" \
-           "$WORK/data/usr/bin/fwlive-status" \
-           "$WORK/data/usr/bin/fwlive-subnets"
 
-SIZE=$(du -sb "$WORK/data" 2>/dev/null | cut -f1 || du -sk "$WORK/data" | cut -f1)
+# The exec bits are right in git, but a checkout that came through a transport
+# which drops them would otherwise produce an unusable package.
+find "$WORK/data/etc/init.d" "$WORK/data/usr/bin" -type f -exec chmod 0755 {} +
 
-cat > "$WORK/control/control" <<EOC
-Package: luci-app-fw-live
+# du -sb is GNU only. The || cannot go on the pipeline, because a pipeline
+# reports cut's status and not du's, which silently left this field empty.
+SIZE=$(du -sb "$WORK/data" 2>/dev/null | cut -f1)
+[ -n "$SIZE" ] || SIZE=$(( $(du -sk "$WORK/data" | cut -f1) * 1024 ))
+
+cat > "$WORK/control/control" <<EOF
+Package: $PKG
 Version: ${VERSION}-${RELEASE}
-Depends: luci-base, rpcd-mod-ucode, conntrack
-Section: luci
-Architecture: all
+Depends: $DEPENDS
+Section: $(mkvar SECTION)
+Architecture: $(mkvar PKGARCH)
 Installed-Size: ${SIZE}
-Maintainer: Local build
-License: Apache-2.0
-Description: Live firewall accept/deny view for LuCI.
- Shows what the firewall is accepting and refusing as it happens. Denied
- packets come from the firewall's kernel log, accepted connections from the
- conntrack event stream. No firewall rules, no packet inspection and no
- effect on flow offloading.
-EOC
+Maintainer: $(mkvar PKG_MAINTAINER)
+License: $(mkvar PKG_LICENSE)
+Description: $(mkvar TITLE)
+$(mkdefine description)
+EOF
 
-echo "/etc/config/fw-live" > "$WORK/control/conffiles"
+mkdefine conffiles > "$WORK/control/conffiles"
 
-cat > "$WORK/control/postinst" <<'EOC'
-#!/bin/sh
-[ -n "${IPKG_INSTROOT}" ] && exit 0
-/etc/init.d/fw-live enable
-# Stop and start rather than restart, and swallow the stop: procd leaves an
-# unchanged instance alone, so a plain start would keep the old process running
-# against the newly installed files, while restart complains that it cannot
-# delete a service procd does not know about. Not running is normal here, both
-# on a first install and after prerm has already stopped it.
-/etc/init.d/fw-live stop >/dev/null 2>&1
-/etc/init.d/fw-live start
-/etc/init.d/rpcd reload >/dev/null 2>&1
-rm -rf /tmp/luci-indexcache /tmp/luci-indexcache.* /tmp/luci-modulecache
-exit 0
-EOC
-
-cat > "$WORK/control/prerm" <<'EOC'
-#!/bin/sh
-[ -n "${IPKG_INSTROOT}" ] && exit 0
-/etc/init.d/fw-live stop >/dev/null 2>&1
-/etc/init.d/fw-live disable >/dev/null 2>&1
-exit 0
-EOC
-
-cat > "$WORK/control/postrm" <<'EOC'
-#!/bin/sh
-[ -n "${IPKG_INSTROOT}" ] && exit 0
-rm -rf /tmp/fw-live
-rm -rf /tmp/luci-indexcache /tmp/luci-indexcache.* /tmp/luci-modulecache
-/etc/init.d/rpcd reload >/dev/null 2>&1
-exit 0
-EOC
-
-chmod 0755 "$WORK/control/postinst" "$WORK/control/prerm" "$WORK/control/postrm"
+for script in postinst prerm postrm; do
+	mkdefine "$script" > "$WORK/control/$script"
+	chmod 0755 "$WORK/control/$script"
+done
 
 ( cd "$WORK/data" && tar --numeric-owner --owner=0 --group=0 -czf ../data.tar.gz ./* )
 ( cd "$WORK/control" && tar --numeric-owner --owner=0 --group=0 -czf ../control.tar.gz ./* )

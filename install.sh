@@ -11,19 +11,11 @@ set -e
 
 SRC=$(cd "$(dirname "$0")" && pwd)/package/luci-app-fw-live/files
 
-FILES="
-/etc/init.d/fw-live
-/usr/bin/fwlive-follow
-/usr/bin/fwlive-logging
-/usr/bin/fwlive-query
-/usr/bin/fwlive-status
-/usr/bin/fwlive-subnets
-/usr/share/rpcd/ucode/luci.fw_live.uc
-/usr/share/rpcd/acl.d/luci-app-fw-live.json
-/usr/share/luci/menu.d/luci-app-fw-live.json
-/www/luci-static/resources/view/fw-live/main.js
-/www/luci-static/resources/view/fw-live/settings.js
-"
+# Everything the package ships, as destination paths, read from the files tree
+# rather than listed again here, so adding a file needs no change to this
+# script. The config file is left out and handled on its own below: it is
+# neither overwritten on install nor removed on uninstall.
+FILES=$(cd "$SRC" && find . -type f ! -path './etc/config/*' | sed 's|^\.||' | sort)
 
 if [ "$1" = "--remove" ]; then
 	/etc/init.d/fw-live stop 2>/dev/null || true
@@ -47,9 +39,10 @@ command -v ucode >/dev/null 2>&1 || [ -f /usr/lib/rpcd/ucode.so ] || \
 for f in $FILES; do
 	mkdir -p "$(dirname "$f")"
 	cp "$SRC$f" "$f"
+	case "$f" in
+		/etc/init.d/*|/usr/bin/*) chmod 0755 "$f" ;;
+	esac
 done
-chmod 0755 /etc/init.d/fw-live /usr/bin/fwlive-follow /usr/bin/fwlive-logging \
-           /usr/bin/fwlive-query /usr/bin/fwlive-status /usr/bin/fwlive-subnets
 
 if [ ! -f /etc/config/fw-live ]; then
 	cp "$SRC/etc/config/fw-live" /etc/config/fw-live

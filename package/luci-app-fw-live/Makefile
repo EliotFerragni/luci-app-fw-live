@@ -86,7 +86,10 @@ define Package/luci-app-fw-live/prerm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
 /etc/init.d/fw-live stop >/dev/null 2>&1
-/etc/init.d/fw-live disable >/dev/null 2>&1
+# opkg passes "upgrade" when a newer version is replacing this one, and only a
+# real removal should drop the rc.d symlink. Disabling on upgrade leaves the
+# service off permanently if the install dies before the new postinst runs.
+[ "$$1" = "upgrade" ] || /etc/init.d/fw-live disable >/dev/null 2>&1
 exit 0
 endef
 
