@@ -1,0 +1,17 @@
+{
+	"luci-app-fw-live": {
+		"description": "Read the live firewall accept/deny feed and manage its settings",
+		"read": {
+			"ubus": {
+				"luci_fw_live": [ "events", "status", "logging" ]
+			},
+			"uci": [ "fw-live" ]
+		},
+		"write": {
+			"ubus": {
+				"luci_fw_live": [ "set_logging" ]
+			},
+			"uci": [ "fw-live" ]
+		}
+	}
+}

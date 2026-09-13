@@ -1,0 +1,36 @@
+{
+	"admin/status/fw-live": {
+		"title": "Firewall Live",
+		"order": 35,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-app-fw-live" ]
+		}
+	},
+
+	"admin/status/fw-live/main": {
+		"title": "Live",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "fw-live/main"
+		},
+		"depends": {
+			"acl": [ "luci-app-fw-live" ]
+		}
+	},
+
+	"admin/status/fw-live/settings": {
+		"title": "Settings",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "fw-live/settings"
+		},
+		"depends": {
+			"acl": [ "luci-app-fw-live" ]
+		}
+	}
+}
