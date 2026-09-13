@@ -1,0 +1,61 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax
+        run: |
+          for f in install.sh build-ipk.sh tests/run-tests.sh tools/capture-fixtures.sh \
+                   package/luci-app-fw-live/files/usr/bin/* \
+                   package/luci-app-fw-live/files/etc/init.d/*; do
+            sh -n "$f" || exit 1
+          done
+      - name: JavaScript syntax
+        run: |
+          for f in package/luci-app-fw-live/files/www/luci-static/resources/view/fw-live/*.js; do
+            node --check "$f" || exit 1
+          done
+      - name: JSON syntax
+        run: |
+          for f in package/luci-app-fw-live/files/usr/share/rpcd/acl.d/*.json \
+                   package/luci-app-fw-live/files/usr/share/luci/menu.d/*.json; do
+            python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" || exit 1
+          done
+      - name: Fixture replay and query cases
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq busybox-static
+          ./tests/run-tests.sh
+
+  package:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ipk
+        run: ./build-ipk.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipk
+          path: "*.ipk"
+          retention-days: 3
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" *.ipk --clobber
