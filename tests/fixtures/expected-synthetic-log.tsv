@@ -1,0 +1,9 @@
+T	1	log	reject	4	tcp	198.51.100.23	59214	203.0.113.7	22	br-wan	-	in	reject wan in	SYN
+T	2	log	drop	4	udp	198.51.100.199	40001	203.0.113.7	5060	br-wan	-	in	drop wan invalid ct state	-
+T	3	log	reject	6	tcp	2001:db8:beef::1	33012	2001:db8:1:1::1	445	br-wan	-	in	reject wan in	SYN
+T	4	log	reject	4	icmp	192.0.2.44	-	203.0.113.7	-	br-wan	-	in	reject wan in	8/0
+T	5	log	unknown	4	tcp	192.168.3.42	51422	192.168.1.10	445	br-guest/wlan1	br-lan	local	Block-Guest-To-LAN	SYN
+T	6	log	reject	4	icmp	198.51.100.23	-	203.0.113.7	-	br-wan	-	in	reject wan in	3/3
+T	7	log	reject	4	tcp	192.168.1.24	44102	198.51.100.77	25	br-lan/wlan0	br-wan	out	reject wan out	SYN
+T	8	log	reject	6	icmpv6	fe80::1	-	fd00:db8:1:1::1	-	br-guest/wlan1	-	local	reject guest in	134/0
+T	9	log	reject	4	47	198.51.100.90	-	203.0.113.7	-	br-wan	-	in	reject wan in	-

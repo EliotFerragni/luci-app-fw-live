@@ -1,0 +1,444 @@
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=42680 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=42680 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=35093 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=35093 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47096 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47096 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=49317 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=49317 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=53708 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=53708 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=50294 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=50294 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=42067 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=42067 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48906 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48906 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=38466 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=38466 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=36760 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=36760 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48908 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48908 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=45766 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=45766 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=32814 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=32814 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=51565 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=51565 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=49667 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=49667 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=50701 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=50701 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=38185 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=38185 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=53294 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=53294 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48910 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48910 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48912 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48912 mark=16128
+    [NEW] icmp     1 30 src=192.168.1.76 dst=198.51.100.100 type=8 code=0 id=895 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=895 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=53902 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=53902 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.3 dst=198.51.100.100 type=8 code=0 id=12128 [UNREPLIED] src=198.51.100.100 dst=192.168.11.3 type=0 code=0 id=12128 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=55872 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=55872 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48914 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48914 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=51107 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=51107 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=45890 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=45890 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=41309 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=41309 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=50797 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=50797 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=38352 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=38352 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34659 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34659 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.2 dst=198.51.100.100 type=8 code=0 id=12133 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=12133 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48916 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48916 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=45226 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=45226 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=53302 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=53302 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48918 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48918 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=44079 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=44079 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=55142 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=55142 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56729 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56729 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=53464 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=53464 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=57407 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=57407 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34815 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34815 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=39577 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=39577 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48920 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48920 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=46244 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=46244 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=53304 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=53304 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48922 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48922 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48335 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48335 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39806 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39806 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58714 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58714 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47766 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47766 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34187 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34187 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48939 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48939 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48924 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48924 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34065 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34065 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=47349 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=47349 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48926 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48926 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=36618 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=36618 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=51969 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=51969 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58943 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58943 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=50209 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=50209 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47561 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47561 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47007 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47007 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=43018 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=43018 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48928 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48928 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59306 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59306 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48389 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48389 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=38543 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=38543 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48930 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48930 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59239 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59239 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=52808 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=52808 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56423 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56423 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34919 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34919 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=35404 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=35404 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.3 dst=198.51.100.100 type=8 code=0 id=12138 [UNREPLIED] src=198.51.100.100 dst=192.168.11.3 type=0 code=0 id=12138 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=43026 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=43026 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48932 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48932 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=53909 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=53909 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.2 dst=198.51.100.100 type=8 code=0 id=12143 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=12143 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.21.58 sport=47124 dport=443 [UNREPLIED] src=192.168.21.58 dst=192.168.1.76 sport=443 dport=47124 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=37166 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=37166 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=43159 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=43159 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40342 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40342 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=36349 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=36349 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58806 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58806 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48934 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48934 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40210 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40210 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=239.255.255.250 sport=41734 dport=1900 [UNREPLIED] src=239.255.255.250 dst=192.168.1.205 sport=1900 dport=41734 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=255.255.255.255 sport=56700 dport=56700 [UNREPLIED] src=255.255.255.255 dst=192.168.1.205 sport=56700 dport=56700 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=43038 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=43038 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=38270 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=38270 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=42760 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=42760 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48936 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48936 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59621 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59621 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60398 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60398 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=57362 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=57362 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=35931 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=35931 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=43773 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=43773 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48938 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48938 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59268 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59268 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48940 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48940 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=43044 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=43044 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=54074 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=54074 mark=16128
+    [NEW] udp      17 60 src=192.168.1.98 dst=255.255.255.255 sport=5678 dport=5678 [UNREPLIED] src=255.255.255.255 dst=192.168.1.98 sport=5678 dport=5678 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=57464 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=57464 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60647 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60647 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60665 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60665 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58910 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58910 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=57593 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=57593 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=46620 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=46620 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48942 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48942 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34112 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34112 mark=16128
+    [NEW] udp      17 60 src=192.168.21.215 dst=192.168.30.20 sport=56135 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.215 sport=53 dport=56135 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.21.215 dst=0.0.0.0 sport=63743 dport=443 [UNREPLIED] src=0.0.0.0 dst=192.168.21.215 sport=443 dport=63743 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48944 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48944 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=239.255.255.250 sport=59840 dport=1900 [UNREPLIED] src=239.255.255.250 dst=192.168.1.205 sport=1900 dport=59840 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.1 dst=192.168.11.3 type=8 code=0 id=50023 [UNREPLIED] src=192.168.11.3 dst=192.168.11.1 type=0 code=0 id=50023 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=41843 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=41843 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=50687 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=50687 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58733 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58733 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39404 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39404 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=53418 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=53418 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=54997 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=54997 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48946 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48946 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=239.255.255.250 sport=51036 dport=1900 [UNREPLIED] src=239.255.255.250 dst=192.168.1.205 sport=1900 dport=51036 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=40838 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=40838 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=33873 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=33873 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=38348 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=38348 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48948 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48948 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48950 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48950 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=35521 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=35521 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=37682 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=37682 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=32825 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=32825 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40483 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40483 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=239.255.255.250 sport=53177 dport=1900 [UNREPLIED] src=239.255.255.250 dst=192.168.1.205 sport=1900 dport=53177 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=50882 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=50882 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=44381 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=44381 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45064 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45064 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48952 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48952 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45068 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45068 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45066 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45066 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45070 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45070 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.3 dst=198.51.100.100 type=8 code=0 id=12148 [UNREPLIED] src=198.51.100.100 dst=192.168.11.3 type=0 code=0 id=12148 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45072 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45072 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45074 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45074 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45076 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45076 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=192.168.1.205 sport=45078 dport=1682 [UNREPLIED] src=192.168.1.205 dst=192.168.1.174 sport=1682 dport=45078 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39355 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39355 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.2 dst=198.51.100.100 type=8 code=0 id=12153 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=12153 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48954 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48954 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=40844 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=40844 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=39757 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=39757 mark=16128
+    [NEW] udp      17 60 src=192.168.1.174 dst=192.168.30.20 sport=44122 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.174 sport=53 dport=44122 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.174 dst=198.51.100.128 sport=55178 dport=81 [UNREPLIED] src=198.51.100.128 dst=192.168.11.2 sport=81 dport=55178 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=45804 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=45804 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=54458 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=54458 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39222 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39222 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=44196 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=44196 mark=16128
+    [NEW] udp      17 60 src=192.168.1.174 dst=192.168.30.20 sport=45956 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.174 sport=53 dport=45956 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=50407 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=50407 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48956 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48956 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48956 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48956 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=40856 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=40856 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48958 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48958 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=38693 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=38693 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=54825 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=54825 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48054 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48054 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56214 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56214 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60936 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60936 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56469 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56469 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=60152 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=60152 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48960 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48960 mark=16128
+    [NEW] udp      17 60 src=192.168.21.172 dst=192.168.30.20 sport=56350 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.172 sport=53 dport=56350 mark=16128
+    [NEW] udp      17 60 src=192.168.21.172 dst=192.168.30.20 sport=51815 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.172 sport=53 dport=51815 mark=16128
+    [NEW] udp      17 60 src=192.168.21.172 dst=198.51.100.127 sport=50350 dport=443 [UNREPLIED] src=198.51.100.127 dst=192.168.11.2 sport=443 dport=50350 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.21.172 dst=198.51.100.127 sport=64432 dport=443 [UNREPLIED] src=198.51.100.127 dst=192.168.11.2 sport=443 dport=64432 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59463 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59463 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=40864 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=40864 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48962 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48962 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=33339 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=33339 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56245 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56245 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=46554 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=46554 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40420 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40420 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=57439 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=57439 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48964 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48964 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=52553 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=52553 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=60344 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=60344 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48966 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48966 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=34076 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=34076 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=57483 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=57483 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=44164 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=44164 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39459 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39459 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56209 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56209 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34435 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34435 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=49032 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=49032 mark=16128
+    [NEW] udp      17 60 src=192.168.21.172 dst=192.168.30.20 sport=50351 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.172 sport=53 dport=50351 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48968 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48968 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=33858 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=33858 mark=16128
+    [NEW] tcp      6 300 ESTABLISHED src=192.168.1.96 dst=198.51.100.102 sport=60359 dport=5223 [UNREPLIED] src=198.51.100.102 dst=192.168.11.2 sport=5223 dport=60359 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=55983 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=55983 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=59933 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=59933 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.149 sport=52230 dport=443 [UNREPLIED] src=198.51.100.149 dst=192.168.11.2 sport=443 dport=52230 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=64733 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=64733 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=50482 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=50482 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=224.0.0.251 sport=5353 dport=5353 [UNREPLIED] src=224.0.0.251 dst=192.168.1.96 sport=5353 dport=5353 mark=16128
+    [NEW] udp      17 60 src=fe80::2 dst=ff02::fb sport=5353 dport=5353 [UNREPLIED] src=ff02::fb dst=fe80::2 sport=5353 dport=5353
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.149 sport=60397 dport=443 [UNREPLIED] src=198.51.100.149 dst=192.168.11.2 sport=443 dport=60397 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48970 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48970 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=46529 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=46529 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.3 dst=198.51.100.100 type=8 code=0 id=12158 [UNREPLIED] src=198.51.100.100 dst=192.168.11.3 type=0 code=0 id=12158 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=239.255.255.250 sport=64326 dport=1900 [UNREPLIED] src=239.255.255.250 dst=192.168.1.96 sport=1900 dport=64326 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=239.255.255.250 sport=59416 dport=1900 [UNREPLIED] src=239.255.255.250 dst=192.168.1.96 sport=1900 dport=59416 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=53441 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=53441 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.137 sport=60468 dport=443 [UNREPLIED] src=198.51.100.137 dst=192.168.11.2 sport=443 dport=60468 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=239.255.255.250 sport=61093 dport=1900 [UNREPLIED] src=239.255.255.250 dst=192.168.1.96 sport=1900 dport=61093 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=192.168.1.96 sport=53204 dport=61093 [UNREPLIED] src=192.168.1.96 dst=192.168.1.205 sport=61093 dport=53204 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=33847 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=33847 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.137 sport=60398 dport=443 [UNREPLIED] src=198.51.100.137 dst=192.168.11.2 sport=443 dport=60398 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.139 sport=58362 dport=443 [UNREPLIED] src=198.51.100.139 dst=192.168.11.2 sport=443 dport=58362 mark=256
+    [NEW] udp      17 60 src=192.168.1.205 dst=192.168.1.96 sport=58916 dport=61093 [UNREPLIED] src=192.168.1.96 dst=192.168.1.205 sport=61093 dport=58916 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47490 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47490 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=46744 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=46744 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40561 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40561 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=33845 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=33845 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.140 sport=55044 dport=443 [UNREPLIED] src=198.51.100.140 dst=192.168.11.2 sport=443 dport=55044 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.136 sport=60399 dport=443 [UNREPLIED] src=198.51.100.136 dst=192.168.11.2 sport=443 dport=60399 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.156 sport=49509 dport=443 [UNREPLIED] src=198.51.100.156 dst=192.168.11.2 sport=443 dport=49509 mark=256
+    [NEW] udp      17 60 src=192.168.1.205 dst=192.168.1.96 sport=40179 dport=61093 [UNREPLIED] src=192.168.1.96 dst=192.168.1.205 sport=61093 dport=40179 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.156 sport=49870 dport=443 [UNREPLIED] src=198.51.100.156 dst=192.168.11.2 sport=443 dport=49870 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=192.168.1.205 sport=60400 dport=1664 [UNREPLIED] src=192.168.1.205 dst=192.168.1.96 sport=1664 dport=60400 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=192.168.1.205 sport=60401 dport=36866 [UNREPLIED] src=192.168.1.205 dst=192.168.1.96 sport=36866 dport=60401 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.2 dst=198.51.100.100 type=8 code=0 id=12163 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=12163 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48972 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48972 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.139 sport=49945 dport=443 [UNREPLIED] src=198.51.100.139 dst=192.168.11.2 sport=443 dport=49945 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=38980 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=38980 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=58932 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=58932 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=59313 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=59313 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=34090 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=34090 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48974 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48974 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.21.172 dst=198.51.100.108 sport=64434 dport=443 [UNREPLIED] src=198.51.100.108 dst=192.168.11.2 sport=443 dport=64434 mark=256
+    [NEW] udp      17 60 src=192.168.21.172 dst=192.168.30.20 sport=50665 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.172 sport=53 dport=50665 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.21.172 dst=198.51.100.109 sport=64435 dport=443 [UNREPLIED] src=198.51.100.109 dst=192.168.11.2 sport=443 dport=64435 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34840 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34840 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58222 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58222 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60401 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60401 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=45330 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=45330 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=33703 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=33703 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=35684 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=35684 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47852 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47852 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48976 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48976 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=58123 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=58123 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=59265 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=59265 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.155 sport=64430 dport=443 [UNREPLIED] src=198.51.100.155 dst=192.168.11.2 sport=443 dport=64430 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=63149 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=63149 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=64526 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=64526 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.155 sport=60402 dport=443 [UNREPLIED] src=198.51.100.155 dst=192.168.11.2 sport=443 dport=60402 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.154 sport=56903 dport=443 [UNREPLIED] src=198.51.100.154 dst=192.168.11.2 sport=443 dport=56903 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=55274 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=55274 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=56780 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=56780 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=53400 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=53400 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.154 sport=60403 dport=443 [UNREPLIED] src=198.51.100.154 dst=192.168.11.2 sport=443 dport=60403 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.130 sport=55692 dport=443 [UNREPLIED] src=198.51.100.130 dst=192.168.11.2 sport=443 dport=55692 mark=256
+    [NEW] icmp     1 30 src=192.168.1.76 dst=198.51.100.100 type=8 code=0 id=896 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=896 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48978 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48978 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=51971 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=51971 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=57684 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=57684 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.141 sport=63151 dport=443 [UNREPLIED] src=198.51.100.141 dst=192.168.11.2 sport=443 dport=63151 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.141 sport=58618 dport=443 [UNREPLIED] src=198.51.100.141 dst=192.168.11.2 sport=443 dport=58618 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=34098 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=34098 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=54488 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=54488 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=61791 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=61791 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=59052 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=59052 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=53021 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=53021 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.138 sport=61645 dport=443 [UNREPLIED] src=198.51.100.138 dst=192.168.11.2 sport=443 dport=61645 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=60331 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=60331 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.126 sport=57793 dport=443 [UNREPLIED] src=198.51.100.126 dst=192.168.11.2 sport=443 dport=57793 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.126 sport=60404 dport=443 [UNREPLIED] src=198.51.100.126 dst=192.168.11.2 sport=443 dport=60404 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56546 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56546 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=37879 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=37879 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=49111 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=49111 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48699 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48699 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=43903 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=43903 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=58583 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=58583 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=55824 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=55824 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=35828 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=35828 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.106 sport=60405 dport=443 [UNREPLIED] src=198.51.100.106 dst=192.168.11.2 sport=443 dport=60405 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.142 sport=63402 dport=443 [UNREPLIED] src=198.51.100.142 dst=192.168.11.2 sport=443 dport=63402 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=51889 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=51889 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=64599 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=64599 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=54733 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=54733 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=57942 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=57942 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.105 sport=60406 dport=443 [UNREPLIED] src=198.51.100.105 dst=192.168.11.2 sport=443 dport=60406 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.106 sport=60407 dport=443 [UNREPLIED] src=198.51.100.106 dst=192.168.11.2 sport=443 dport=60407 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.106 sport=60408 dport=443 [UNREPLIED] src=198.51.100.106 dst=192.168.11.2 sport=443 dport=60408 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.106 sport=60409 dport=443 [UNREPLIED] src=198.51.100.106 dst=192.168.11.2 sport=443 dport=60409 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.106 sport=60410 dport=443 [UNREPLIED] src=198.51.100.106 dst=192.168.11.2 sport=443 dport=60410 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.106 sport=60411 dport=443 [UNREPLIED] src=198.51.100.106 dst=192.168.11.2 sport=443 dport=60411 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48980 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48980 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=59948 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=59948 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=64202 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=64202 mark=16128
+    [NEW] udp      17 59 src=192.168.1.96 dst=192.168.30.20 sport=51555 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=51555 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=51412 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=51412 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=63544 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=63544 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.121 sport=60412 dport=443 [UNREPLIED] src=198.51.100.121 dst=192.168.11.2 sport=443 dport=60412 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=62515 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=62515 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.103 sport=60413 dport=443 [UNREPLIED] src=198.51.100.103 dst=192.168.11.2 sport=443 dport=60413 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.107 sport=61940 dport=443 [UNREPLIED] src=198.51.100.107 dst=192.168.11.2 sport=443 dport=61940 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.103 sport=60414 dport=443 [UNREPLIED] src=198.51.100.103 dst=192.168.11.2 sport=443 dport=60414 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=54538 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=54538 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=56046 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=56046 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.121 sport=60415 dport=443 [UNREPLIED] src=198.51.100.121 dst=192.168.11.2 sport=443 dport=60415 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=56376 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=56376 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=59913 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=59913 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=54541 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=54541 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=52235 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=52235 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=50377 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=50377 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=64016 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=64016 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.124 sport=60416 dport=443 [UNREPLIED] src=198.51.100.124 dst=192.168.11.2 sport=443 dport=60416 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=55272 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=55272 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.150 sport=60417 dport=443 [UNREPLIED] src=198.51.100.150 dst=192.168.11.2 sport=443 dport=60417 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=34114 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=34114 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=42774 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=42774 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48982 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48982 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40570 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40570 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47982 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47982 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56338 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56338 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=37737 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=37737 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=53882 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=53882 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40956 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40956 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=46615 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=46615 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48984 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48984 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48986 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48986 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40949 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40949 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=51218 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=51218 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=52844 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=52844 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=55523 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=55523 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=49167 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=49167 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39594 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39594 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=52179 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=52179 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=46032 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=46032 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=59461 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=59461 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48988 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48988 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48990 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48990 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.3 dst=198.51.100.100 type=8 code=0 id=12168 [UNREPLIED] src=198.51.100.100 dst=192.168.11.3 type=0 code=0 id=12168 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48992 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48992 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.2 dst=198.51.100.100 type=8 code=0 id=12173 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=12173 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=36486 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=36486 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=35590 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=35590 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=44497 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=44497 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39637 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39637 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39486 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39486 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39003 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39003 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59969 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59969 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48994 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48994 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=46042 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=46042 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=37780 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=37780 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48996 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48996 mark=16128
+    [NEW] udp      17 60 src=192.168.21.172 dst=192.168.30.20 sport=64954 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.172 sport=53 dport=64954 mark=16128
+    [NEW] udp      17 60 src=192.168.21.172 dst=192.168.30.20 sport=55500 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.172 sport=53 dport=55500 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=44153 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=44153 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.21.172 dst=198.51.100.123 sport=64437 dport=443 [UNREPLIED] src=198.51.100.123 dst=192.168.11.2 sport=443 dport=64437 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39257 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39257 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=38186 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=38186 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59627 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59627 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=41245 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=41245 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48007 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48007 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=46733 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=46733 mark=16128
+    [NEW] udp      17 60 src=192.168.1.174 dst=192.168.1.255 sport=137 dport=137 [UNREPLIED] src=192.168.1.255 dst=192.168.1.174 sport=137 dport=137 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=48998 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=48998 mark=16128
+    [NEW] udp      17 60 src=192.168.21.58 dst=192.168.30.20 sport=33199 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.58 sport=53 dport=33199 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49000 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49000 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=46054 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=46054 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=39369 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=39369 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40901 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40901 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=47841 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=47841 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=57347 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=57347 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=37096 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=37096 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=43486 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=43486 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60506 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60506 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49002 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49002 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=192.168.30.20 sport=47904 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.205 sport=53 dport=47904 mark=16128
+    [NEW] udp      17 60 src=192.168.1.205 dst=192.168.1.1 sport=38793 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.205 sport=53 dport=38793 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49004 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49004 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=53554 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=53554 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58622 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58622 mark=16128
+    [NEW] udp      17 60 src=192.168.1.174 dst=192.168.1.255 sport=138 dport=138 [UNREPLIED] src=192.168.1.255 dst=192.168.1.174 sport=138 dport=138 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=45709 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=45709 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39820 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39820 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60547 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60547 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=53212 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=53212 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=49955 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=49955 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=43576 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=43576 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49006 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49006 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=41521 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=41521 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49008 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49008 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=39446 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=39446 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40573 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40573 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60411 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60411 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=54914 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=54914 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=54006 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=54006 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58181 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58181 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=45612 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=45612 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=53556 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=53556 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.3 dst=198.51.100.100 type=8 code=0 id=12200 [UNREPLIED] src=198.51.100.100 dst=192.168.11.3 type=0 code=0 id=12200 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49010 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49010 mark=16128
+    [NEW] icmp     1 30 src=192.168.11.2 dst=198.51.100.100 type=8 code=0 id=12205 [UNREPLIED] src=198.51.100.100 dst=192.168.11.2 type=0 code=0 id=12205 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.1.255 sport=49145 dport=15600 [UNREPLIED] src=192.168.1.255 dst=192.168.1.31 sport=15600 dport=49145 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=57988 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=57988 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=53549 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=53549 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=37479 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=37479 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=52132 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=52132 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.131 sport=60418 dport=443 [UNREPLIED] src=198.51.100.131 dst=192.168.11.2 sport=443 dport=60418 mark=256
+    [NEW] tcp      6 120 SYN_SENT src=192.168.11.1 dst=192.168.11.2 sport=60418 dport=443 [UNREPLIED] src=192.168.1.174 dst=192.168.11.1 sport=4443 dport=60418 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49012 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49012 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.151 sport=55702 dport=443 [UNREPLIED] src=198.51.100.151 dst=192.168.11.2 sport=443 dport=55702 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=198.51.100.152 sport=58488 dport=443 [UNREPLIED] src=198.51.100.152 dst=192.168.11.2 sport=443 dport=58488 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=58354 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=58354 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=60954 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=60954 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=42224 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=42224 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=59623 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=59623 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=56808 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=56808 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40850 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40850 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49014 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49014 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=53566 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=53566 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=40968 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=40968 mark=16128
+    [NEW] udp      17 60 src=192.168.21.215 dst=192.168.30.20 sport=61868 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.21.215 sport=53 dport=61868 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.21.215 dst=0.0.0.0 sport=63744 dport=443 [UNREPLIED] src=0.0.0.0 dst=192.168.21.215 sport=443 dport=63744 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=60633 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=60633 mark=16128
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=56818 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=56818 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49016 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49016 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.104 sport=60419 dport=443 [UNREPLIED] src=198.51.100.104 dst=192.168.11.2 sport=443 dport=60419 mark=256
+    [NEW] udp      17 60 src=192.168.1.96 dst=192.168.30.20 sport=50969 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.96 sport=53 dport=50969 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.96 dst=198.51.100.104 sport=60420 dport=443 [UNREPLIED] src=198.51.100.104 dst=192.168.11.2 sport=443 dport=60420 mark=256
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=54251 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=54251 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=34355 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=34355 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=37951 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=37951 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=52234 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=52234 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=55975 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=55975 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=44152 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=44152 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=239.255.255.250 sport=49848 dport=15600 [UNREPLIED] src=239.255.255.250 dst=192.168.1.31 sport=15600 dport=49848 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49018 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49018 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.76 dst=192.168.0.163 sport=53572 dport=1502 [UNREPLIED] src=192.168.0.163 dst=192.168.1.76 sport=1502 dport=53572 mark=16128
+    [NEW] udp      17 60 src=192.168.1.31 dst=192.168.30.20 sport=48628 dport=53 [UNREPLIED] src=192.168.30.20 dst=192.168.1.31 sport=53 dport=48628 mark=16128
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.205 dst=192.168.1.174 sport=49020 dport=50001 [UNREPLIED] src=192.168.1.174 dst=192.168.1.205 sport=50001 dport=49020 mark=16128

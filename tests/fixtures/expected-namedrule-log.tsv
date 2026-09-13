@@ -1,0 +1,16 @@
+T	1	log	unknown	4	udp	192.168.1.31	42425	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet	-
+T	2	log	reject	4	tcp	192.168.1.31	46446	198.51.100.111	443	br-lan/wlan0	br-wan	out	Block-Internet	SYN
+T	3	log	unknown	4	udp	192.168.1.31	60537	192.168.1.255	15600	br-lan/wlan0	br-lan/wlan2	local	Block-Internet	-
+T	4	log	unknown	4	udp	192.168.1.31	60537	192.168.1.255	15600	br-lan/wlan0	br-lan/wlan3	local	Block-Internet	-
+T	5	log	unknown	4	udp	192.168.1.31	60537	192.168.1.255	15600	br-lan/wlan0	br-lan/wlan0	local	Block-Internet	-
+T	6	log	unknown	4	udp	192.168.1.31	60537	192.168.1.255	15600	br-lan/wlan0	br-lan/lan1	local	Block-Internet	-
+T	7	log	unknown	4	udp	192.168.1.31	56879	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet	-
+T	8	log	unknown	4	udp	192.168.1.31	47210	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet	-
+T	9	log	unknown	4	udp	192.168.1.31	47210	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet	-
+T	10	log	reject	4	tcp	192.168.1.31	56064	198.51.100.110	443	br-lan/wlan0	br-wan	out	Block-Internet	SYN
+T	11	log	unknown	4	udp	192.168.1.31	40476	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet	-
+T	12	log	reject	4	tcp	192.168.1.31	34390	198.51.100.134	80	br-lan/wlan0	br-wan	out	Block-Internet	SYN
+T	13	log	unknown	4	udp	192.168.1.31	39716	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet	-
+T	14	log	reject	4	udp	192.168.1.31	44657	198.51.100.135	123	br-lan/wlan0	br-wan	out	Block-Internet	-
+T	15	log	reject	4	tcp	198.51.100.143	443	192.168.11.2	59346	br-wan/lan2	-	in	reject wan in	ACK,PSH
+T	16	log	reject	4	tcp	198.51.100.143	443	192.168.11.2	59346	br-wan/lan2	-	in	reject wan in	ACK,FIN

@@ -1,0 +1,105 @@
+
+=== 1. is the conntrack event stream usable at all ===
+conntrack: /usr/sbin/conntrack
+nf_conntrack_events: 2
+
+=== 2a. does conntrack -E flush per event when its output is not a terminal ===
+The whole page is a live tail, so an event that sits in a stdio buffer
+until the next 4 KB is as good as lost. Check by hand:
+    conntrack -E -e NEW | cat
+and confirm rows appear as they happen rather than in bursts. If they
+burst, this conntrack build is block buffering and the accept feed
+needs an unbuffering wrapper.
+
+=== 2. the load bearing assumption: a denied packet must NOT produce a NEW event ===
+A conntrack entry is only confirmed once the packet has survived the
+ruleset, so a dropped or rejected packet should never appear as NEW.
+Check this by hand: from outside, hit a port the wan zone refuses
+while watching conntrack -E -e NEW. If denied packets DO show up,
+the accept feed is wrong and the design needs log based accepts.
+
+=== 3. what fw4 logs today, and with what prefix text ===
+137:		log prefix "reject lan forward: "
+174:		log prefix "reject wan forward: "
+178:		meta nfproto ipv4 oifname { "br-wan", "br-wan2" } ct state invalid counter log prefix "drop wan invalid ct state: " drop comment "!fw4: Prevent NAT leakage"
+183:		iifname { "br-wan", "br-wan2" } counter log prefix "reject wan in: " jump handle_reject comment "!fw4: reject wan IPv4/IPv6 traffic"
+187:		oifname { "br-wan", "br-wan2" } counter log prefix "reject wan out: " jump handle_reject comment "!fw4: reject wan IPv4/IPv6 traffic"
+202:		log prefix "reject iot forward: "
+228:		log prefix "reject vpn forward: "
+261:		log prefix "reject guest forward: "
+272:		iifname "br-guest" counter log prefix "reject guest in: " jump handle_reject comment "!fw4: reject guest IPv4/IPv6 traffic"
+--- uci
+firewall.@zone[0].log='1'
+firewall.@zone[1].log='1'
+firewall.iot.log='1'
+firewall.@zone[3].log='1'
+firewall.@zone[4].log='1'
+
+=== 4. zones and their logging state ===
+@zone[0] name=lan log=1
+@zone[1] name=wan log=1
+@zone[2] name=iot log=1
+@zone[3] name=vpn log=1
+@zone[4] name=guest log=1
+
+=== 5. per rule logging, which decides whether the Rule column is ever populated ===
+(set option log '1' on one rule, reload the firewall, trigger it, and
+ check whether the prefix in the captured log below carries its name)
+
+=== versions ===
+DISTRIB_ID='OpenWrt'
+DISTRIB_RELEASE='24.10.5'
+DISTRIB_REVISION='r29087-d9c5716d1d'
+DISTRIB_TARGET='mediatek/filogic'
+DISTRIB_ARCH='aarch64_cortex-a53'
+DISTRIB_DESCRIPTION='OpenWrt 24.10.5 r29087-d9c5716d1d'
+DISTRIB_TAINTS=''
+Usage:
+
+  /sbin/fw4 [-v] [-q] start|stop|flush|restart|reload
+
+    Start, stop, flush, restart or reload the firewall respectively.
+
+
+  /sbin/fw4 [-v] [-q] reload-sets
+
+    Reload the contents of all declared sets but do not touch the
+    ruleset.
+
+
+  /sbin/fw4 [-q] print
+
+    Print the rendered ruleset.
+
+
+  /sbin/fw4 [-q] check
+
+    Test the rendered ruleset using nftables' check mode without
+    applying it to the running system.
+
+
+  /sbin/fw4 [-q] network {net}
+
+    Print the name of the firewall zone covering the given network.
+
+    Exits with code 1 if the network is not found or if no zone is
+    covering it.
+
+
+  /sbin/fw4 [-q] device {dev}
+
+    Print the name of the firewall zone covering the given device.
+
+    Exits with code 1 if the device is not found or if no zone is
+    covering it.
+
+
+  /sbin/fw4 [-q] zone {zone} [dev]
+
+    Print all covered devices of the given zone, optionally restricted
+    to only the given device name.
+
+    Exits with code 1 if zone is not found or if a device is specified
+    and not covered by the given zone.
+
+conntrack v1.4.8 (conntrack-tools)

@@ -1,0 +1,8 @@
+    [NEW] tcp      6 120 SYN_SENT src=192.168.1.24 dst=198.51.100.133 sport=52418 dport=443 [UNREPLIED] src=198.51.100.133 dst=203.0.113.7 sport=443 dport=52418
+    [NEW] udp      17 30 src=192.168.1.31 dst=192.168.1.1 sport=51890 dport=53 [UNREPLIED] src=192.168.1.1 dst=192.168.1.31 sport=53 dport=51890
+    [NEW] icmp     1 30 src=192.168.1.24 dst=198.51.100.100 type=8 code=0 id=4711 [UNREPLIED] src=198.51.100.100 dst=203.0.113.7 type=0 code=0 id=4711
+    [NEW] tcp      6 120 SYN_SENT src=2001:db8:1:1::c0a8 dst=2001:db8:53::2 sport=39122 dport=853 [UNREPLIED] src=2001:db8:53::2 dst=2001:db8:1:1::c0a8 sport=853 dport=39122
+ [DESTROY] tcp      6 src=192.168.1.24 dst=198.51.100.133 sport=52400 dport=443 packets=12 bytes=3011
+    [NEW] udp      17 30 src=198.51.100.5 dst=203.0.113.7 sport=123 dport=123 [UNREPLIED] src=203.0.113.7 dst=198.51.100.5 sport=123 dport=123
+    [NEW] unknown  47 600 src=192.168.1.50 dst=198.51.100.60 [UNREPLIED] src=198.51.100.60 dst=192.168.1.50
+    [NEW] icmpv6   58 30 src=fd00:db8:1:1::20 dst=2001:db8:53::1 type=128 code=0 id=1 [UNREPLIED] src=2001:db8:53::1 dst=fd00:db8:1:1::20 type=129 code=0 id=1

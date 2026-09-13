@@ -1,0 +1,15 @@
+T	1	log	unknown	4	udp	192.168.1.31	53578	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet > Block-DNS2	-
+T	2	log	unknown	4	udp	192.168.1.31	33758	239.255.255.250	15600	br-lan/wlan0	br-lan/wlan2	out	Block-Internet	-
+T	3	log	unknown	4	udp	192.168.1.31	33758	239.255.255.250	15600	br-lan/wlan0	br-lan/wlan3	out	Block-Internet	-
+T	4	log	unknown	4	udp	192.168.1.31	33758	239.255.255.250	15600	br-lan/wlan0	br-lan/wlan0	out	Block-Internet	-
+T	5	log	unknown	4	udp	192.168.1.31	33758	239.255.255.250	15600	br-lan/wlan0	br-lan/lan1	out	Block-Internet	-
+T	6	log	unknown	4	udp	192.168.21.58	48475	192.168.30.20	53	br-guest/wlan1	br-iot	local	Block-Internet > Block-DNS2	-
+T	7	log	unknown	4	udp	192.168.21.58	48263	192.168.21.1	53	br-guest/wlan1	-	local	Block-DNS1	-
+T	8	log	unknown	4	udp	192.168.21.58	53939	192.168.30.20	53	br-guest/wlan1	br-iot	local	Block-Internet > Block-DNS2	-
+T	9	log	unknown	4	udp	192.168.1.31	47473	192.168.1.1	53	br-lan/wlan0	-	local	Block-DNS1	-
+T	10	log	unknown	4	udp	192.168.1.31	41629	192.168.1.1	53	br-lan/wlan0	-	local	Block-DNS1	-
+T	11	log	unknown	4	udp	192.168.1.31	54020	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet > Block-DNS2	-
+T	12	log	unknown	4	udp	192.168.1.31	34154	192.168.1.255	15600	br-lan/wlan0	br-lan/wlan2	local	Block-Internet	-
+T	13	log	unknown	4	udp	192.168.1.31	34154	192.168.1.255	15600	br-lan/wlan0	br-lan/wlan3	local	Block-Internet	-
+T	14	log	unknown	4	udp	192.168.1.31	41814	192.168.1.1	53	br-lan/wlan0	-	local	Block-DNS1	-
+T	15	log	unknown	4	udp	192.168.1.31	56331	192.168.30.20	53	br-lan/wlan0	br-iot	local	Block-Internet > Block-DNS2	-
