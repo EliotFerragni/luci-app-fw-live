@@ -1,0 +1,305 @@
+#!/bin/sh
+# The single diagnostic entry point, surfaced by /etc/init.d/fw-live status,
+# by the settings tab and by the status line on the live view. One key: value
+# per line, which is the shape the ucode backend already knows how to parse.
+#
+# It detects the firewall's logging configuration and prints the commands to
+# turn it on, but never writes /etc/config/firewall itself. That file is the
+# one place on a router where a mistake costs remote access.
+
+RUN=${FWLIVE_RUN:-/tmp/fw-live}
+PIDFILE=/var/run/fw-live.pid
+
+ENABLED=1
+ACCEPTS=1
+DENIES=1
+BUFFER_SIZE=5000
+MAX_RATE=200
+POLL_INTERVAL=2
+IGNORE_LOCAL=0
+IGNORE_UNKNOWN=0
+MERGE_RULES=1
+TIME_FORMAT=auto
+DATE_FORMAT=auto
+
+if [ -r /lib/functions.sh ]; then
+	. /lib/functions.sh
+	config_load fw-live 2>/dev/null
+	config_get ENABLED main enabled "$ENABLED"
+	config_get ACCEPTS main accepts "$ACCEPTS"
+	config_get DENIES main denies "$DENIES"
+	config_get BUFFER_SIZE main buffer_size "$BUFFER_SIZE"
+	config_get MAX_RATE main max_rate "$MAX_RATE"
+	config_get POLL_INTERVAL main poll_interval "$POLL_INTERVAL"
+	config_get IGNORE_LOCAL main ignore_local "$IGNORE_LOCAL"
+	config_get IGNORE_UNKNOWN main ignore_unknown "$IGNORE_UNKNOWN"
+	config_get MERGE_RULES main merge_rules "$MERGE_RULES"
+	config_get TIME_FORMAT main time_format "$TIME_FORMAT"
+	config_get DATE_FORMAT main date_format "$DATE_FORMAT"
+fi
+
+NOW=$(date +%s)
+
+stamp() {
+	case "$DATE_FORMAT" in
+		dmy) _d="%d/%m/%Y" ;;
+		mdy) _d="%m/%d/%Y" ;;
+		*)   _d="%Y-%m-%d" ;;
+	esac
+	case "$TIME_FORMAT" in
+		12) _t="%I:%M:%S %p" ;;
+		*)  _t="%H:%M:%S" ;;
+	esac
+	date -D %s -d "$1" "+$_d $_t" 2>/dev/null || date -d "@$1" "+$_d $_t"
+}
+
+count_lines() {
+	[ -f "$1" ] || { echo 0; return; }
+	wc -l < "$1" | tr -d ' '
+}
+
+stat_of() {
+	# $1 file, $2 key
+	[ -f "$1" ] || { echo 0; return; }
+	awk -v k="$2" '$1 == k { v = $2 + 0 } END { print v + 0 }' "$1"
+}
+
+# service
+SERVICE_PID=""
+if [ -f "$PIDFILE" ]; then
+	_p=$(cat "$PIDFILE" 2>/dev/null)
+	case "$_p" in
+		''|*[!0-9]*) ;;
+		*) kill -0 "$_p" 2>/dev/null && SERVICE_PID=$_p ;;
+	esac
+fi
+if [ -z "$SERVICE_PID" ]; then
+	SERVICE_PID=$(pgrep -f '/usr/bin/fwlive-follow' 2>/dev/null | head -n 1)
+fi
+
+if [ -n "$SERVICE_PID" ]; then
+	echo "service:           running (pid $SERVICE_PID)"
+elif [ "$ENABLED" != "1" ]; then
+	echo "service:           disabled in /etc/config/fw-live"
+else
+	echo "service:           NOT running, start it with /etc/init.d/fw-live start"
+fi
+
+_cap_a=$([ "$ACCEPTS" = 1 ] && echo "accepts on" || echo "accepts off")
+_cap_d=$([ "$DENIES" = 1 ] && echo "denies on" || echo "denies off")
+echo "capture:           $_cap_a, $_cap_d"
+
+# conntrack, the accept feed
+CT_LINES=$(count_lines "$RUN/events.ct")
+if ! command -v conntrack >/dev/null 2>&1; then
+	echo "conntrack events:  conntrack binary missing, run opkg install conntrack"
+elif [ "$ACCEPTS" != "1" ]; then
+	echo "conntrack events:  not captured, accepts is 0 in /etc/config/fw-live"
+else
+	_ev=$(cat /proc/sys/net/netfilter/nf_conntrack_events 2>/dev/null)
+	if [ "$_ev" = "0" ]; then
+		echo "conntrack events:  nf_conntrack_events is 0, the kernel emits none"
+		echo "conntrack fix:     sysctl -w net.netfilter.nf_conntrack_events=1"
+	elif [ "$CT_LINES" -gt 0 ]; then
+		echo "conntrack events:  available, $CT_LINES buffered"
+	else
+		echo "conntrack events:  no events seen yet"
+	fi
+fi
+
+# firewall logging, the deny feed
+ZONES_ON=""
+ZONES_ON_N=0
+BLIND_N=0
+BLIND_NAMES=""
+BLIND_SECTS=""
+SUGGEST=""
+RULES_LOGGED=0
+HAVE_UCI=0
+
+if command -v uci >/dev/null 2>&1; then
+	HAVE_UCI=1
+	# One uci call and one awk, rather than a get per zone and per rule: the
+	# live page asks for this every twenty seconds.
+	#
+	# Sections are keyed by their uci identifier rather than by a @zone[N]
+	# index, because a zone written as a named section shows up here as
+	# firewall.iot, not firewall.@zone[2], and would otherwise be missed.
+	_fw=$(uci -q show firewall 2>/dev/null | tr -d "\047" | awk '
+	BEGIN { FS = "="; nsect = 0; nrules = 0 }
+	{
+		key = $1
+		val = $0
+		sub(/^[^=]*=/, "", val)
+		if (key !~ /^firewall\./) next
+		rest = substr(key, 10)
+		d = index(rest, ".")
+		sect = (d > 0) ? substr(rest, 1, d - 1) : rest
+		opt = (d > 0) ? substr(rest, d + 1) : ""
+		if (!(sect in seen)) { seen[sect] = 1; nsect++; order[nsect] = sect }
+		if (opt == "") type[sect] = val
+		else if (opt == "name") name[sect] = val
+		else if (opt == "log") logopt[sect] = val
+		else if (opt == "target") target[sect] = toupper(val)
+		else if (opt == "enabled") enabled[sect] = val
+	}
+	END {
+		on = ""; non = 0; suggest = ""; first = ""
+		blindnames = ""; blindsects = ""; nblind = 0
+		for (i = 1; i <= nsect; i++) {
+			s = order[i]
+			if (type[s] == "rule") {
+				if (logopt[s] == "1") { nrules++; continue }
+				if (enabled[s] == "0") continue
+				# A rule that refuses the packet itself terminates it, so the
+				# zone rule that would otherwise log it never runs. Without
+				# option log on the rule, those denials are invisible: they
+				# are in no log line and, having been refused, in no conntrack
+				# event either.
+				if (target[s] != "REJECT" && target[s] != "DROP") continue
+				nblind++
+				n = (name[s] != "") ? name[s] : s
+				blindnames = (blindnames == "") ? n : blindnames ", " n
+				blindsects = (blindsects == "") ? s : blindsects " " s
+				continue
+			}
+			if (type[s] != "zone") continue
+			n = (name[s] != "") ? name[s] : s
+			if (logopt[s] == "1") { on = (on == "") ? n : on ", " n; non++ }
+			else {
+				if (first == "") first = s
+				# the wan zone is where unsolicited traffic arrives, so it is
+				# the one worth logging first
+				if (n == "wan" && suggest == "") suggest = s
+			}
+		}
+		if (suggest == "") suggest = first
+		print non
+		print on
+		print suggest
+		print nrules
+		print nblind
+		print blindnames
+		print blindsects
+	}')
+	{
+		read ZONES_ON_N
+		read ZONES_ON
+		read SUGGEST
+		read RULES_LOGGED
+		read BLIND_N
+		read BLIND_NAMES
+		read BLIND_SECTS
+	} <<ZONEINFO
+$_fw
+ZONEINFO
+	case "$ZONES_ON_N" in ''|*[!0-9]*) ZONES_ON_N=0 ;; esac
+	case "$RULES_LOGGED" in ''|*[!0-9]*) RULES_LOGGED=0 ;; esac
+	case "$BLIND_N" in ''|*[!0-9]*) BLIND_N=0 ;; esac
+fi
+
+if [ "$DENIES" != "1" ]; then
+	echo "firewall logging:  not captured, denies is 0 in /etc/config/fw-live"
+elif [ "$HAVE_UCI" != "1" ]; then
+	echo "firewall logging:  unknown, uci is not available here"
+elif [ "$ZONES_ON_N" -gt 0 ]; then
+	[ "$ZONES_ON_N" = 1 ] && _z=zone || _z=zones
+	echo "firewall logging:  enabled on $_z $ZONES_ON"
+else
+	echo "firewall logging:  off on every zone, so nothing denied is recorded"
+	# Ready to paste, with the section already filled in. uci takes a named
+	# section and a @zone[N] index the same way.
+	if [ -n "$SUGGEST" ]; then
+		echo "logging fix:       uci set firewall.$SUGGEST.log='1'; uci commit firewall; /etc/init.d/firewall reload"
+	else
+		echo "logging fix:       the firewall has no zones to enable logging on"
+	fi
+fi
+echo "logged rules:      $RULES_LOGGED with option log set"
+
+# The blind spot zone logging cannot cover, reported every time so that a rule
+# added next month announces itself rather than quietly going unseen.
+if [ "$DENIES" = "1" ] && [ "$BLIND_N" -gt 0 ]; then
+	echo "unlogged denies:   $BLIND_N rules refuse traffic without logging it: $BLIND_NAMES"
+	_fix=""
+	for _s in $BLIND_SECTS; do
+		_fix="${_fix}uci set firewall.$_s.log='1'; "
+	done
+	echo "rule logging fix:  ${_fix}uci commit firewall; /etc/init.d/firewall reload"
+elif [ "$DENIES" = "1" ]; then
+	echo "unlogged denies:   none, every rule that refuses traffic also logs it"
+fi
+
+# the buffer
+LOG_LINES=$(count_lines "$RUN/events.log")
+echo "buffered:          $CT_LINES accepted, $LOG_LINES denied (max $BUFFER_SIZE each)"
+
+# awk stops at the first file it cannot open, so build the list rather than
+# naming both and hoping.
+SPOOLS=""
+[ -f "$RUN/events.log" ] && SPOOLS="$SPOOLS $RUN/events.log"
+[ -f "$RUN/events.ct" ] && SPOOLS="$SPOOLS $RUN/events.ct"
+
+OLDEST=$(awk -F'\t' 'NF >= 15 && (o == 0 || $1 + 0 < o) { o = $1 + 0 } END { print o + 0 }' \
+	$SPOOLS /dev/null)
+case "$OLDEST" in ''|*[!0-9]*) OLDEST=0 ;; esac
+if [ "$OLDEST" -gt 0 ]; then
+	echo "oldest event:      $(stamp "$OLDEST") ($((NOW - OLDEST))s ago)"
+else
+	echo "oldest event:      none buffered yet"
+fi
+
+# How fast each feed is arriving, measured across the window the buffer
+# actually spans. Turning on zone logging is the one thing here that costs the
+# router something, so the cost should be on screen rather than inferred.
+echo "event rate:        $(awk -F'\t' '
+	NF >= 15 {
+		n[$3]++
+		if (lo[$3] == 0 || $1 + 0 < lo[$3]) lo[$3] = $1 + 0
+		if ($1 + 0 > hi[$3]) hi[$3] = $1 + 0
+	}
+	function per(s,   span) {
+		if (!(s in n)) return "0/s"
+		span = hi[s] - lo[s]
+		if (span < 1) span = 1
+		return sprintf("%.1f/s", n[s] / span)
+	}
+	END { printf "%s accepted, %s denied", per("ct"), per("log") }
+' $SPOOLS /dev/null)"
+
+TRIMMED=$(( $(stat_of "$RUN/stats.log" trimmed) + $(stat_of "$RUN/stats.ct" trimmed) ))
+SHED=$(( $(stat_of "$RUN/stats.log" shed) + $(stat_of "$RUN/stats.ct" shed) ))
+echo "discarded:         $TRIMMED (buffer), $SHED (rate limit)"
+
+echo "rate limit:        $MAX_RATE events/s per feed"
+echo "poll interval:     $POLL_INTERVAL s"
+echo "ignore local:      $([ "$IGNORE_LOCAL" = 1 ] && echo yes || echo no)"
+echo "ignore unknown:    $([ "$IGNORE_UNKNOWN" = 1 ] && echo yes || echo no)"
+if [ "$MERGE_RULES" = 1 ]; then
+	# The running follower is whatever was on disk when the service last
+	# started, so an upgrade that was not followed by a restart leaves it
+	# behind while the query script, re-read on every call, is already new.
+	# That shows up as options being reported here but having no effect.
+	if grep -q pending_release /usr/bin/fwlive-follow 2>/dev/null &&
+	   ! logread -e fw-live 2>/dev/null | grep -q "merge_rules="; then
+		echo "merge rules:       configured on, but the running service predates it, restart with /etc/init.d/fw-live restart"
+	else
+		echo "merge rules:       yes, $(stat_of "$RUN/stats.log" merged) rows carry a rule name they would not otherwise have"
+	fi
+else
+	echo "merge rules:       no"
+fi
+
+# Count what the follower would actually accept, not how many lines the file
+# has: a malformed prefix cache that still has lines in it would otherwise
+# report itself as healthy while every direction came out unknown.
+SUBNETS=0
+[ -f "$RUN/subnets" ] && SUBNETS=$(awk 'NF >= 3 && ($1 == "4" || $1 == "6") && $3 + 0 > 0 { n++ } END { print n + 0 }' "$RUN/subnets")
+if [ "$SUBNETS" -gt 0 ]; then
+	echo "local prefixes:    $SUBNETS known"
+else
+	echo "local prefixes:    none usable, so direction is reported as unknown"
+	echo "prefix fix:        /usr/bin/fwlive-subnets"
+fi
+
+exit 0
