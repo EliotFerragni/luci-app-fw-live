@@ -29,16 +29,22 @@ start_service() {
 	procd_close_instance
 }
 
-stop_service() {
-	# Everything is in RAM and is a live view by design, so there is nothing
-	# to flush. Clear the spools rather than leave a frozen buffer that looks
-	# live on the page.
+# Not stop_service: rc.common runs that one *before* procd_kill, so anything
+# deleted there is deleted while the follower is still running and about to be
+# asked to stop. It reads its pid files during that shutdown to find its reader,
+# its ticker and its parser, and it writes into its fifos until the moment they
+# go, so removing either from under it orphans the whole feed. That is what left
+# a logread, a conntrack and two awk behind on every single upgrade.
+#
+# service_stopped runs after procd_kill instead. Even here nothing the follower
+# owns is touched: it removes its own pid files and fifos as it goes, and if it
+# was killed outright rather than asked, what it left is exactly what the next
+# instance sweeps. Only the spools are cleared, so a stopped service does not
+# leave a frozen buffer that still looks live on the page.
+service_stopped() {
 	rm -f /tmp/fw-live/events.log /tmp/fw-live/events.ct \
 	      /tmp/fw-live/events.log.new /tmp/fw-live/events.ct.new \
-	      /tmp/fw-live/stats.log /tmp/fw-live/stats.ct \
-	      /tmp/fw-live/feed.log /tmp/fw-live/feed.ct \
-	      /tmp/fw-live/reader.log.pid /tmp/fw-live/reader.ct.pid \
-	      /tmp/fw-live/running
+	      /tmp/fw-live/stats.log /tmp/fw-live/stats.ct
 }
 
 service_triggers() {

@@ -64,6 +64,12 @@ mkdir -p "$RUN" || exit 1
 # functions, so it adds /proc/uptime to the boot epoch worked out here.
 UPTIME_FILE=${FWLIVE_UPTIME:-/proc/uptime}
 
+# The two readers, overridable only so that a test can put something it
+# controls behind them. Note that busybox ash resolves an applet name before it
+# looks at PATH, so off a router a fake has to be named here rather than shadowed.
+LOGREAD=${FWLIVE_LOGREAD:-logread}
+CONNTRACK=${FWLIVE_CONNTRACK:-conntrack}
+
 BOOT=${FWLIVE_BOOT:-}
 if [ -z "$BOOT" ]; then
 	_up=$(awk '{ print int($1); exit }' "$UPTIME_FILE" 2>/dev/null)
@@ -515,10 +521,64 @@ esac
 # the command line so a hand run fwlive-follow --parse is left alone, and taken
 # from $0 rather than written out, so it finds the right processes wherever the
 # script is run from.
+#
+# Asking is not enough, it has to be waited for. `/etc/init.d/fw-live stop`
+# only tells procd to stop the instance and returns, so on an upgrade the old
+# follower is still running its own shutdown while this one is already
+# creating fifos. Everything here is keyed on fixed paths in $RUN, so an
+# overlap ends with the old instance reading a reader pid file this one has
+# just rewritten and killing this one's reader, while its own reader and
+# parser carry on through a fifo that has since been unlinked and that nothing
+# can ever close. That pair then survives every later upgrade, which is how a
+# router ends up with two logread, two conntrack and four awk.
+_olds=
 for _old in $(pgrep -f "$0\$" 2>/dev/null); do
 	[ "$_old" = "$$" ] && continue
 	kill -TERM "$_old" 2>/dev/null
+	_olds="$_olds $_old"
 done
+
+_waited=0
+while [ -n "$_olds" ] && [ "$_waited" -lt 10 ]; do
+	_left=
+	for _old in $_olds; do
+		kill -0 "$_old" 2>/dev/null && _left="$_left $_old"
+	done
+	_olds=$_left
+	[ -n "$_olds" ] || break
+	sleep 1
+	_waited=$((_waited + 1))
+done
+
+for _old in $_olds; do
+	logger -t fw-live "previous instance $_old did not stop, killing it"
+	kill -KILL "$_old" 2>/dev/null
+done
+
+# Everything a predecessor left running is holding one of these fifos open: a
+# reader writes into one, a ticker keeps one open for its whole life, and a
+# parser reads one and is released by nothing but end of file on it. So the
+# open descriptor is the record of what is ours, and it is a better one than
+# the pid files: it names the ticker too, it cannot go stale, and it survives
+# the fifo being unlinked, which is the state the orphans are actually in.
+#
+# The pid files are still how this instance kills its own feeds when it is
+# asked to stop, where the pids are known and nothing has to be searched for.
+#
+# Keyed on the fifos rather than on the run directory, so that reading the
+# spool from a terminal, or an fwlive-query that happens to be running, is not
+# mistaken for a feed. Nothing of ours exists yet at this point, and $$ is
+# skipped, so anything holding one of these is a leftover.
+for _d in /proc/[0-9]*/fd; do
+	_p=${_d%/fd}
+	_p=${_p#/proc/}
+	[ "$_p" = "$$" ] && continue
+	ls -l "$_d" 2>/dev/null | grep -qF "$RUN/feed." || continue
+	kill -TERM "$_p" 2>/dev/null
+done
+
+rm -f "$RUN"/reader.*.pid "$RUN"/ticker.*.pid "$RUN"/parser.*.pid
+rm -f "$RUN/feed.log" "$RUN/feed.ct"
 
 : > "$RUN/events.log"
 : > "$RUN/events.ct"
@@ -572,9 +632,14 @@ run_feed() {
 			echo $! > "$RUN/ticker.$_mode.pid"
 		fi
 
-		# The parser runs in the foreground, so it returns when the reader
-		# stops and the loop brings the pair back up together.
-		parse "$_mode" < "$_fifo"
+		# Waited for rather than run in the foreground, so that its pid is
+		# known: the parser is released only by end of file, so one that ever
+		# outlives the follower that started it cannot be reached any other
+		# way. The loop still comes back round when it returns.
+		parse "$_mode" < "$_fifo" &
+		_ppid=$!
+		echo "$_ppid" > "$RUN/parser.$_mode.pid"
+		wait "$_ppid"
 		kill "$(cat "$RUN/reader.$_mode.pid" 2>/dev/null)" 2>/dev/null
 		kill "$(cat "$RUN/ticker.$_mode.pid" 2>/dev/null)" 2>/dev/null
 		wait
@@ -586,13 +651,13 @@ PID_LOG=
 PID_CT=
 
 if [ "$DENIES" = 1 ]; then
-	run_feed log "$FIFO_LOG" logread -f -e 'IN=' &
+	run_feed log "$FIFO_LOG" "$LOGREAD" -f -e 'IN=' &
 	PID_LOG=$!
 fi
 
 if [ "$ACCEPTS" = 1 ]; then
-	if command -v conntrack >/dev/null 2>&1; then
-		run_feed ct "$FIFO_CT" conntrack -E -e NEW &
+	if command -v "$CONNTRACK" >/dev/null 2>&1; then
+		run_feed ct "$FIFO_CT" "$CONNTRACK" -E -e NEW &
 		PID_CT=$!
 	else
 		logger -t fw-live "conntrack not installed, accepted connections will not be captured"
@@ -604,8 +669,10 @@ fi
 	exit 0
 }
 
-kill_reader() {
-	for _f in "$RUN/ticker.$1.pid" "$RUN/reader.$1.pid"; do
+kill_feed() {
+	# The parser last: killing the reader and the ticker is what closes its
+	# fifo, and it has a held event to release before it goes.
+	for _f in "$RUN/ticker.$1.pid" "$RUN/reader.$1.pid" "$RUN/parser.$1.pid"; do
 		_r=$(cat "$_f" 2>/dev/null)
 		case "$_r" in
 			''|*[!0-9]*) ;;
@@ -620,10 +687,11 @@ shutdown() {
 	# parser, and killing the readers below is what gives it the end of file
 	# it needs to follow them.
 	kill -TERM $PID_LOG $PID_CT 2>/dev/null
-	kill_reader log
-	kill_reader ct
+	kill_feed log
+	kill_feed ct
 	rm -f "$FIFO_LOG" "$FIFO_CT" "$RUN/reader.log.pid" "$RUN/reader.ct.pid" \
-	      "$RUN/ticker.log.pid" "$RUN/ticker.ct.pid" "$RUN/running"
+	      "$RUN/ticker.log.pid" "$RUN/ticker.ct.pid" \
+	      "$RUN/parser.log.pid" "$RUN/parser.ct.pid" "$RUN/running"
 	exit 0
 }
 trap shutdown INT TERM

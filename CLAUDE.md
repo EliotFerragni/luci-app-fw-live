@@ -424,6 +424,43 @@ Worth not repeating:
   the default rule run `make` in an empty build directory and fail.
 - Forgetting `/tmp/luci-modulecache` when clearing LuCI caches, so a newly
   installed page stays invisible until something else invalidates it.
+- **Clearing the run directory from `stop_service`**, which orphaned a
+  `logread`, a `conntrack` and two `awk` on every single stop. rc.common calls
+  `stop_service` and *then* `procd_kill`, so everything that hook deleted was
+  deleted while the follower was still running and about to be asked to stop.
+  It reads its pid files during that shutdown to find its reader, its ticker
+  and its parser, and it writes into its fifos until the moment they go, so
+  removing either left it with nothing to kill and nothing to close. The hook
+  that runs after the process is gone is `service_stopped`, and even there the
+  init script now clears only the spools: what the follower owns is removed by
+  the follower, or swept by the next instance if it was killed outright. An
+  upgrade from 1.0.4 or older leaves orphans that no pid file names any more.
+  What still names them is the fifo: a reader writes into one, a ticker holds
+  one open for its whole life, and a parser reads one and is released by
+  nothing else, so an open descriptor on `/tmp/fw-live/feed.*` is what makes a
+  process ours. The follower sweeps on that at startup, before it has any
+  processes of its own. It is a better record than the pid files, since it
+  names the ticker too, cannot go stale, and survives the fifo being unlinked,
+  which is the state the orphans are in. Do not widen it to the run directory:
+  `tail -f` on a spool, or an `fwlive-query` that happens to be running, would
+  then look like a feed. And do not match on command lines: `conntrack -E -e
+  NEW` is what this file tells a person to run to check the feed.
+- **Two instances of the follower overlapping on a restart**, which left a
+  reader and a parser of the old one behind on every upgrade until the router
+  had two `logread`, two `conntrack` and four `awk`. `/etc/init.d/fw-live stop`
+  only asks procd to stop the instance and returns, so the new follower was
+  creating its fifos while the old one was still running its shutdown, and
+  everything either of them owns is keyed on a fixed path in `/tmp/fw-live`.
+  The old instance read `reader.log.pid`, which the new one had just rewritten,
+  and killed the new one's reader; its own reader and parser carried on
+  through a fifo the new one had since unlinked, where nothing could ever close
+  it. procd killing a follower that did not stop in time produced the same
+  orphans with none of the racing. The new instance now waits for the old one
+  to actually exit before it touches anything, kills it outright if it will
+  not, and then sweeps every pid still recorded in the run directory, the
+  parser included: a parser is released only by end of file, so one whose
+  reader outlived its follower is beyond every other kind of reach. That is
+  also why the parser pid is now recorded at all.
 - **`\]` inside a bracket expression in the ucode backend**, which made every
   logging checkbox fail with "Nothing valid to change." ucode's lexer drops the
   backslash before a `]` in a bracket expression (`parse_escape` retains only

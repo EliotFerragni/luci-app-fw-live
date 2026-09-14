@@ -766,6 +766,198 @@ kill "$STALE_PID" 2>/dev/null
 wait "$STALE_PID" 2>/dev/null
 
 echo
+echo "restart leaves nothing behind"
+
+# An upgrade runs stop then start, and stop only asks procd to stop the old
+# follower and returns, so two instances overlap. Everything the follower owns
+# is keyed on fixed paths in $RUN, so an overlap used to end with the old
+# instance killing the new one's reader out of a pid file the new one had just
+# rewritten, while its own reader and parser carried on through a fifo that had
+# since been unlinked. That pair then survived every later upgrade, which is
+# how a router ends up with two logread, two conntrack and four awk.
+#
+# The real follower is run here, with both feeds faked, because the bug is in
+# how the processes are brought down and nothing smaller than that has it.
+FEEDW=$WORK/restart
+mkdir -p "$FEEDW/bin" "$FEEDW/run"
+# Both fakes ignore SIGPIPE, because the real ones effectively do: `logread -f`
+# can sit for hours without writing a byte, so it never notices that the fifo it
+# writes into has lost its reader. A fake that quietly died of SIGPIPE instead
+# would clean up after leaks that on a router last until the next reboot, and
+# the tests below would pass over a follower that leaks.
+cat > "$FEEDW/bin/logread" <<'EOF'
+#!/bin/sh
+trap '' PIPE
+while :; do
+	echo "kernel: reject wan in: IN=eth0 OUT= SRC=192.0.2.1 DST=198.51.100.1 PROTO=TCP SPT=1 DPT=2" 2>/dev/null
+	sleep 1
+done
+EOF
+cat > "$FEEDW/bin/conntrack" <<'EOF'
+#!/bin/sh
+trap '' PIPE
+while :; do
+	echo "    [NEW] tcp      6 120 SYN_SENT src=192.0.2.2 dst=198.51.100.2 sport=3 dport=4" 2>/dev/null
+	sleep 1
+done
+EOF
+printf '#!/bin/sh\nexit 0\n' > "$FEEDW/bin/logger"
+chmod 755 "$FEEDW/bin"/*
+# Written rather than discovered, so the follower does not shell out to the
+# real fwlive-subnets on the machine running the tests.
+printf '4 192.168.1.0 24\n' > "$FEEDW/run/subnets"
+cp "$BIN/fwlive-follow" "$FEEDW/follow"
+chmod 755 "$FEEDW/follow"
+
+# Every descendant of a follower: its feed and ticker subshells, and their
+# readers and parsers.
+feed_tree() {
+	_t=$1
+	for _a in $(pgrep -P "$1" 2>/dev/null); do
+		_t="$_t $_a"
+		for _b in $(pgrep -P "$_a" 2>/dev/null); do
+			_t="$_t $_b"
+		done
+	done
+	echo "$_t"
+}
+
+await_follower() {
+	# $1 the pid the marker file has to name, so this waits for the instance
+	# that is actually up rather than for the file to merely exist
+	_n=0
+	while [ "$_n" -lt 20 ]; do
+		[ "$(awk '$1 == "pid" { print $2 }' "$FEEDW/run/running" 2>/dev/null)" = "$1" ] && return 0
+		sleep 1
+		_n=$((_n + 1))
+	done
+	return 1
+}
+
+# $1 how the first instance goes: term is an ordinary restart, kill is procd
+# losing patience with one that did not stop in time.
+restart_survivors() {
+	rm -rf "$FEEDW/run"
+	mkdir -p "$FEEDW/run"
+	printf '4 192.168.1.0 24\n' > "$FEEDW/run/subnets"
+
+	# The readers are named rather than put on PATH: busybox ash resolves its
+	# own logread applet before it looks there, so a fake would be ignored.
+	#
+	# Both instances are detached from this function's stdout. Without that a
+	# leaked reader or parser inherits the pipe of the command substitution
+	# the caller is reading, and the test hangs instead of reporting the leak
+	# it was written to catch.
+	FWLIVE_RUN=$FEEDW/run FWLIVE_LOGREAD=$FEEDW/bin/logread \
+		FWLIVE_CONNTRACK=$FEEDW/bin/conntrack \
+		$RUNSH "$FEEDW/follow" >/dev/null 2>&1 &
+	_a=$!
+	_why=
+	await_follower "$_a" || _why="the first follower never came up"
+	sleep 1
+	_atree=$(feed_tree "$_a")
+
+	# kill: procd losing patience with a follower that did not stop in time.
+	# legacy: what upgrading from 1.0.4 or older looks like, where the init
+	# script had already deleted the pid files before the follower was asked
+	# to stop, so its reader and parser were orphaned with nothing naming them.
+	if [ "$1" = kill ] || [ "$1" = legacy ]; then
+		[ "$1" = legacy ] && rm -f "$FEEDW/run"/reader.*.pid \
+			"$FEEDW/run"/ticker.*.pid "$FEEDW/run"/parser.*.pid
+		kill -KILL "$_a" 2>/dev/null
+	fi
+
+	FWLIVE_RUN=$FEEDW/run FWLIVE_LOGREAD=$FEEDW/bin/logread \
+		FWLIVE_CONNTRACK=$FEEDW/bin/conntrack \
+		$RUNSH "$FEEDW/follow" >/dev/null 2>&1 &
+	_b=$!
+	[ -n "$_why" ] || await_follower "$_b" || _why="the second follower never came up"
+	sleep 2
+
+	_left=
+	for _p in $_atree; do
+		kill -0 "$_p" 2>/dev/null && _left="$_left$_p "
+	done
+
+	# What is left of the first instance is only half the question. A restart
+	# that takes the old processes down and fails to bring the new ones up is
+	# just as wrong, and under one shell or another this bug did both, so the
+	# whole steady state is what gets compared: one reader per feed, and
+	# events still arriving.
+	#
+	# Whether the parsers are alive is read off the spool rather than from the
+	# process list, because busybox ash runs awk as an applet inside a forked
+	# copy of itself, where it has the shell's command line and no name to be
+	# found by.
+	_lr=$(pgrep -c -f "$FEEDW/bin/logread" 2>/dev/null || true)
+	_ct=$(pgrep -c -f "$FEEDW/bin/conntrack" 2>/dev/null || true)
+	_was=$(wc -l < "$FEEDW/run/events.log" 2>/dev/null | tr -d ' ')
+	sleep 2
+	_now=$(wc -l < "$FEEDW/run/events.log" 2>/dev/null | tr -d ' ')
+	if [ "${_now:-0}" -gt "${_was:-0}" ]; then
+		_flow=flowing
+	else
+		_flow=stopped
+	fi
+
+	# Unconditionally, and before anything is reported: a run that went wrong
+	# is exactly the run that has processes to clear, and leaving them would
+	# hand the next case a dirty machine.
+	kill -TERM "$_a" "$_b" 2>/dev/null
+	sleep 1
+	pkill -9 -f "$FEEDW" >/dev/null 2>&1
+	# Named, not a bare wait: this runs with other background jobs of the
+	# suite still going, and a bare wait would sit on those too.
+	wait "$_a" "$_b" 2>/dev/null
+
+	if [ -n "$_why" ]; then
+		echo "$_why"
+	else
+		echo "leftovers:[$_left] logread:${_lr:-0} conntrack:${_ct:-0} events:$_flow"
+	fi
+}
+
+# One reader per feed, events still arriving through it, and nothing at all
+# from the instance that was replaced.
+RESTART_OK="leftovers:[] logread:1 conntrack:1 events:flowing"
+
+if command -v pgrep >/dev/null 2>&1 && command -v pkill >/dev/null 2>&1; then
+	check "an ordinary restart leaves one live instance and no remains" \
+		"$(restart_survivors term)" "$RESTART_OK"
+	check "so does one where the old instance never got to shut down" \
+		"$(restart_survivors kill)" "$RESTART_OK"
+	check "and one upgrading from a release that orphaned its own feeds" \
+		"$(restart_survivors legacy)" "$RESTART_OK"
+
+	# Something that only looks like a feed reader: the same command line, run
+	# by hand, with no descriptor on the run directory. `conntrack -E -e NEW`
+	# is what this repository tells a person to run to check the feed, so the
+	# sweep meeting one is not a hypothetical. It lives outside $FEEDW so that
+	# the cleanup inside restart_survivors cannot be what spares it.
+	cat > "$WORK/looks-like-conntrack" <<'EOF'
+#!/bin/sh
+while :; do sleep 1; done
+EOF
+	chmod 755 "$WORK/looks-like-conntrack"
+	"$WORK/looks-like-conntrack" -E -e NEW >/dev/null 2>&1 &
+	BYSTANDER=$!
+	sleep 1
+	restart_survivors term >/dev/null
+	if kill -0 "$BYSTANDER" 2>/dev/null; then
+		ok "a command that only looks like a feed reader is left alone"
+	else
+		bad "a command that only looks like a feed reader is left alone"
+	fi
+	kill "$BYSTANDER" 2>/dev/null
+	wait "$BYSTANDER" 2>/dev/null
+else
+	skip "restart leaves nothing behind (needs pgrep and pkill)"
+	skip "restart leaves nothing behind, hard case (needs pgrep and pkill)"
+	skip "restart leaves nothing behind, legacy case (needs pgrep and pkill)"
+	skip "a lookalike command is left alone (needs pgrep and pkill)"
+fi
+
+echo
 if [ "$SKIP" -gt 0 ]; then
 	echo "$PASS passed, $FAIL failed, $SKIP skipped"
 	echo "a skipped replay is a capture this parser is not actually tested against;"
