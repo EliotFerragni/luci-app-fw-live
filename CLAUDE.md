@@ -395,7 +395,21 @@ Worth not repeating:
   files. `fwlive-query` is re-read on every call and so upgraded instantly,
   while `fwlive-follow` kept running the previous release: the page showed new
   features driving a buffer filled by old code. `fwlive-status` now detects
-  the case.
+  the case, from the marker file below rather than from the log.
+- **Detecting that stale service by looking for the follower's startup line in
+  `logread`.** That line is written once, into a ring of a few hundred lines
+  that the deny feed itself fills, so on a router that is doing what this
+  package is for it is gone within minutes. From then on every run read its
+  absence as proof the service was stale and told the user to restart a
+  service that was already current, which is worse than not checking: the one
+  diagnostic that is supposed to catch a real upgrade problem cried wolf on
+  every healthy router. A log ring is not a record of what is running. The
+  follower writes `/tmp/fw-live/running` at startup instead, with the options
+  it came up with and its own pid so a marker left behind by a killed process
+  cannot answer for the live one, and `fwlive-status` reads that. A follower
+  too old to write the file answers nothing, which is exactly the case the
+  check exists for. `tests/run-tests.sh` covers all three outcomes through the
+  real `fwlive-status`, which until then was not exercised at all.
 - An apostrophe in a **comment** inside the single quoted parser, which ends
   the shell string and kills the script at a line number pointing nowhere near
   it. `tests/run-tests.sh` now checks for this, and the check verifies it

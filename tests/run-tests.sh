@@ -722,6 +722,50 @@ if command -v python3 >/dev/null 2>&1; then
 fi
 
 echo
+echo "stale service detection"
+
+# fwlive-status has to tell an option that is configured from an option that is
+# actually running, because an upgrade replaces the follower on disk while the
+# running one carries on with the old code. It used to look for the follower's
+# startup line in logread, which is one line in a ring the deny feed itself
+# fills, so it aged out and every later run claimed the service was stale.
+# The evidence is a file the running process writes instead.
+stale_line() {
+	# $1 pid the marker file claims, empty for no marker file at all
+	rm -rf "$WORK/srun"
+	mkdir -p "$WORK/srun"
+	printf 'shed 0\ntrimmed 0\nseq 5\nmerged 3\n' > "$WORK/srun/stats.log"
+	echo "$STALE_PID" > "$WORK/srun/pidfile"
+	[ -z "$1" ] || printf 'pid %s\nmerge_rules 1\n' "$1" > "$WORK/srun/running"
+	FWLIVE_RUN=$WORK/srun FWLIVE_PIDFILE=$WORK/srun/pidfile FWLIVE_MERGE_RULES=1 \
+		$RUNSH "$BIN/fwlive-status" 2>/dev/null |
+		sed -n 's/^merge rules: *//p'
+}
+
+# Something that is genuinely alive, so the status script agrees the service is
+# running and the check is reached at all.
+sleep 30 &
+STALE_PID=$!
+
+case "$(stale_line "$STALE_PID")" in
+	yes,*) ok "a follower that wrote the marker is not called stale" ;;
+	*) bad "a follower that wrote the marker is not called stale" ;;
+esac
+
+case "$(stale_line "")" in
+	configured\ on,*) ok "a follower too old to write the marker is called stale" ;;
+	*) bad "a follower too old to write the marker is called stale" ;;
+esac
+
+case "$(stale_line 999999)" in
+	configured\ on,*) ok "a marker left by a killed follower does not answer for the live one" ;;
+	*) bad "a marker left by a killed follower does not answer for the live one" ;;
+esac
+
+kill "$STALE_PID" 2>/dev/null
+wait "$STALE_PID" 2>/dev/null
+
+echo
 if [ "$SKIP" -gt 0 ]; then
 	echo "$PASS passed, $FAIL failed, $SKIP skipped"
 	echo "a skipped replay is a capture this parser is not actually tested against;"

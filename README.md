@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.1
+# luci-app-fw-live 1.0.2
 
 A live view of what your firewall is accepting and refusing, for OpenWrt. It
 shows connections as they happen, under **Status → Firewall Live**, with a
@@ -61,8 +61,8 @@ Two consequences:
 `luci-app-fw-live_<version>_all.ipk` from the [Releases](../../releases) page.
 It is architecture independent, so the same file works on any target:
 
-    scp luci-app-fw-live_1.0.1-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.1-1_all.ipk'
+    scp luci-app-fw-live_1.0.2-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.2-1_all.ipk'
 
 **Option B: no package manager.** Copy the source tree to the router and run
 `install.sh` on it:

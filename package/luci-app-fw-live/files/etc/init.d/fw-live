@@ -37,7 +37,8 @@ stop_service() {
 	      /tmp/fw-live/events.log.new /tmp/fw-live/events.ct.new \
 	      /tmp/fw-live/stats.log /tmp/fw-live/stats.ct \
 	      /tmp/fw-live/feed.log /tmp/fw-live/feed.ct \
-	      /tmp/fw-live/reader.log.pid /tmp/fw-live/reader.ct.pid
+	      /tmp/fw-live/reader.log.pid /tmp/fw-live/reader.ct.pid \
+	      /tmp/fw-live/running
 }
 
 service_triggers() {

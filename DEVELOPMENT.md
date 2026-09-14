@@ -83,7 +83,8 @@ currently does. It records behaviour, it does not verify it, so read the diff
 before committing.
 
 The `FWLIVE_` variables are what make this possible: `FWLIVE_RUN` sets the
-spool directory, `FWLIVE_BOOT` and `FWLIVE_UPTIME` pin the clock, and
+spool directory, `FWLIVE_PIDFILE` points `fwlive-status` at a pid file it can
+write, `FWLIVE_BOOT` and `FWLIVE_UPTIME` pin the clock, and
 `FWLIVE_MAX_RATE`, `FWLIVE_BUFFER_SIZE`, `FWLIVE_IGNORE_LOCAL` and
 `FWLIVE_IGNORE_UNKNOWN` set the defaults used when `/etc/config/fw-live`
 cannot be read. uci wins over all of them on a router.

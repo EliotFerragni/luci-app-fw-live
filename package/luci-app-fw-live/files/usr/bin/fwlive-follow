@@ -623,10 +623,18 @@ shutdown() {
 	kill_reader log
 	kill_reader ct
 	rm -f "$FIFO_LOG" "$FIFO_CT" "$RUN/reader.log.pid" "$RUN/reader.ct.pid" \
-	      "$RUN/ticker.log.pid" "$RUN/ticker.ct.pid"
+	      "$RUN/ticker.log.pid" "$RUN/ticker.ct.pid" "$RUN/running"
 	exit 0
 }
 trap shutdown INT TERM
+
+# What the process that is actually running supports, for fwlive-status to
+# read back. It cannot ask the follower on disk, which an upgrade has already
+# replaced, and it cannot ask the log: this is one line in a ring of a few
+# hundred that the deny feed itself fills, so it is gone within minutes of a
+# busy firewall and every later run would read its absence as a stale service.
+printf "pid %d\naccepts %d\ndenies %d\nignore_unknown %d\nmerge_rules %d\n" \
+	"$$" "$ACCEPTS" "$DENIES" "$IGNORE_UNKNOWN" "$MERGE_RULES" > "$RUN/running"
 
 logger -t fw-live "capture started (accepts=$ACCEPTS denies=$DENIES buffer=$BUFFER_SIZE ignore_unknown=$IGNORE_UNKNOWN merge_rules=$MERGE_RULES)"
 

@@ -8,7 +8,7 @@
 # one place on a router where a mistake costs remote access.
 
 RUN=${FWLIVE_RUN:-/tmp/fw-live}
-PIDFILE=/var/run/fw-live.pid
+PIDFILE=${FWLIVE_PIDFILE:-/var/run/fw-live.pid}
 
 ENABLED=1
 ACCEPTS=1
@@ -280,8 +280,16 @@ if [ "$MERGE_RULES" = 1 ]; then
 	# started, so an upgrade that was not followed by a restart leaves it
 	# behind while the query script, re-read on every call, is already new.
 	# That shows up as options being reported here but having no effect.
-	if grep -q pending_release /usr/bin/fwlive-follow 2>/dev/null &&
-	   ! logread -e fw-live 2>/dev/null | grep -q "merge_rules="; then
+	#
+	# The evidence is the file the running process wrote at startup, carrying
+	# its own pid so a leftover from a killed one cannot answer for it. A
+	# follower too old to write it answers nothing, which is the whole point.
+	if [ -n "$SERVICE_PID" ] && [ "$(stat_of "$RUN/running" pid)" = "$SERVICE_PID" ]; then
+		RUNNING_MERGE=$(stat_of "$RUN/running" merge_rules)
+	else
+		RUNNING_MERGE=0
+	fi
+	if [ -n "$SERVICE_PID" ] && [ "$RUNNING_MERGE" != 1 ]; then
 		echo "merge rules:       configured on, but the running service predates it, restart with /etc/init.d/fw-live restart"
 	else
 		echo "merge rules:       yes, $(stat_of "$RUN/stats.log" merged) rows carry a rule name they would not otherwise have"
