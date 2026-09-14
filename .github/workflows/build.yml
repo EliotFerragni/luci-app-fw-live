@@ -17,7 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Shell syntax
         run: |
-          for f in install.sh build-ipk.sh tests/run-tests.sh tools/capture-fixtures.sh \
+          for f in install.sh build-ipk.sh build-apk.sh tools/pkg-meta.sh \
+                   tests/run-tests.sh tools/capture-fixtures.sh \
                    package/luci-app-fw-live/files/usr/bin/* \
                    package/luci-app-fw-live/files/etc/init.d/*; do
             sh -n "$f" || exit 1
@@ -48,14 +49,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build ipk
         run: ./build-ipk.sh
+      - name: Build apk
+        run: ./build-apk.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: ipk
-          path: "*.ipk"
+          name: packages
+          path: |
+            *.ipk
+            *.apk
           retention-days: 3
       - name: Attach to release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" *.ipk --clobber
+        run: gh release upload "$TAG" *.ipk *.apk --clobber

@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.4
+# luci-app-fw-live 1.0.5
 
 A live view of what your firewall is accepting and refusing, for OpenWrt. It
 shows connections as they happen, under **Status → Firewall Live**, with a
@@ -48,20 +48,35 @@ Two consequences:
 
 ## Requirements
 
-`conntrack` and `rpcd-mod-ucode`:
+`conntrack` and `rpcd-mod-ucode`. On OpenWrt 25.12 and newer:
+
+    apk add conntrack rpcd-mod-ucode
+
+On 24.10 and older:
 
     opkg install conntrack rpcd-mod-ucode
 
 `logread` is part of busybox and is always there.
 
+Developed and verified on 24.10 (mediatek/filogic). 25.12 replaced opkg with
+apk and gets its own package below; nothing else about this release is specific
+to a version, but it has not been run on 25.12 hardware.
+
 ## Install
 
-**Option A: the prebuilt package.** Download
-`luci-app-fw-live_<version>_all.ipk` from the [Releases](../../releases) page.
-It is architecture independent, so the same file works on any target:
+**Option A: the prebuilt package.** Both are architecture independent, so the
+same file works on any target. Take the one your release can install, from the
+[Releases](../../releases) page.
 
-    scp luci-app-fw-live_1.0.4-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.4-1_all.ipk'
+OpenWrt 25.12 and newer, `luci-app-fw-live-<version>.apk`:
+
+    scp luci-app-fw-live-1.0.5-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.5-r1.apk'
+
+OpenWrt 24.10 and older, `luci-app-fw-live_<version>_all.ipk`:
+
+    scp luci-app-fw-live_1.0.5-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.5-1_all.ipk'
 
 **Option B: no package manager.** Copy the source tree to the router and run
 `install.sh` on it:

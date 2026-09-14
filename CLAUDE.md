@@ -28,6 +28,8 @@ having.
     package/luci-app-fw-live/Makefile     OpenWrt package definition
     package/luci-app-fw-live/files/       everything that gets installed
     build-ipk.sh                          builds the .ipk without an SDK
+    build-apk.sh                          builds the .apk without an SDK
+    tools/pkg-meta.sh                     what both builders read out of the Makefile
     install.sh                            installs onto a running router
     tools/preview.py                      runs the LuCI view with no router
     tools/capture-fixtures.sh             Phase 0: run this ON the router
@@ -321,13 +323,29 @@ shell, so nothing else can reach a command line.
 - The `FWLIVE_*` environment variables set the defaults used when
   `/etc/config/fw-live` cannot be read. uci wins over them on a router, so
   they only bite off-router, which is what makes the parser testable.
-- Build with `./build-ipk.sh`. It needs no OpenWrt SDK. The package is
+- Build with `./build-ipk.sh` for OpenWrt 24.10 and older, `./build-apk.sh`
+  for 25.12 and newer, which replaced opkg with apk. Neither needs an OpenWrt
+  SDK, but the apk needs `apk mkpkg` from apk-tools 3, which is neither on a
+  normal Linux box nor on the router: OpenWrt builds the target apk with
+  `-Dminimal=true` and it has no `mkpkg`. `build-apk.sh` falls back to running
+  it in an `alpine:edge` container. What goes into the apk follows OpenWrt's
+  `include/package-pack.mk`, and the part with no counterpart in opkg is that
+  `postinst` is wrapped into both `post-install` and `post-upgrade` while
+  `prerm` becomes `pre-deinstall`, which apk runs only on a real removal. That
+  was checked against apk-tools 3.0.7 rather than assumed, because the whole
+  reason `prerm` asks whether it is an upgrade is that getting it wrong leaves
+  the service disabled for good. The package is
   `PKGARCH:=all` because it contains no compiled code. It reads the version,
   the metadata, the dependencies, the conffiles and all three maintainer
   scripts back out of the package Makefile rather than keeping a second copy,
   because a second copy is how the two silently drift, and the copy that
   matters is the script: releases are built with it and not with the SDK. The
-  same reason `install.sh` derives its file list from the files tree.
+  same reason `install.sh` derives its file list from the files tree, and why
+  the two builders share `tools/pkg-meta.sh` rather than each reading the
+  Makefile their own way.
+
+  Modes are set during staging rather than copied from the checkout, so the
+  package does not depend on the builder's umask.
 - `prerm` disables the service only on a real removal, never on an upgrade.
   opkg passes `upgrade` as `$1` then, and disabling would leave the service off
   for good if the install died before the new `postinst` ran.
@@ -431,6 +449,15 @@ Worth not repeating:
   the default rule run `make` in an empty build directory and fail.
 - Forgetting `/tmp/luci-modulecache` when clearing LuCI caches, so a newly
   installed page stays invisible until something else invalidates it.
+- **`sed 's|^\.|/|'` over `find .` output**, which put `//etc/config/fw-live`
+  into the apk's file list instead of `/etc/config/fw-live`. The pattern
+  matches the dot alone, so the slash `find` already printed survives and the
+  replacement adds a second one. `package/pack.mk` gets this right with
+  `find -printf "/%P"`, which busybox find does not have, so the sed has to eat
+  the `./` itself. apk accepted the package either way, which is exactly why it
+  went unnoticed: it is a deviation that only bites whatever compares the list
+  against real paths. `build-apk.sh` now refuses to build a list with a doubled
+  slash in it, since nothing else in the tree ever looks inside the package.
 - **Clearing the run directory from `stop_service`**, which orphaned a
   `logread`, a `conntrack` and two `awk` on every single stop. rc.common calls
   `stop_service` and *then* `procd_kill`, so everything that hook deleted was

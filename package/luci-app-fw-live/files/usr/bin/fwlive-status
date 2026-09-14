@@ -58,6 +58,16 @@ count_lines() {
 	wc -l < "$1" | tr -d ' '
 }
 
+# 25.12 replaced opkg with apk, and no release has both, so whichever is here
+# is the one to name. Every command this file prints is meant to be pasted.
+pkg_add() {
+	if command -v apk >/dev/null 2>&1; then
+		echo "apk add $1"
+	else
+		echo "opkg install $1"
+	fi
+}
+
 stat_of() {
 	# $1 file, $2 key
 	[ -f "$1" ] || { echo 0; return; }
@@ -92,7 +102,7 @@ echo "capture:           $_cap_a, $_cap_d"
 # conntrack, the accept feed
 CT_LINES=$(count_lines "$RUN/events.ct")
 if ! command -v conntrack >/dev/null 2>&1; then
-	echo "conntrack events:  conntrack binary missing, run opkg install conntrack"
+	echo "conntrack events:  conntrack binary missing, run $(pkg_add conntrack)"
 elif [ "$ACCEPTS" != "1" ]; then
 	echo "conntrack events:  not captured, accepts is 0 in /etc/config/fw-live"
 else

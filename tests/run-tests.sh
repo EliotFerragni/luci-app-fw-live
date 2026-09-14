@@ -222,6 +222,30 @@ else
 	echo "$_brk"
 fi
 
+# The three maintainer scripts live inside the package Makefile, where no
+# syntax check has ever reached them: sh -n covers the shell files in the tree
+# and node --check the views, but these are define blocks in a Makefile. They
+# are what runs as root on somebody's router at install time, and both builders
+# read them straight out of there.
+PKG_ROOT=$ROOT . "$ROOT/tools/pkg-meta.sh"
+for _s in postinst prerm postrm; do
+	if mkdefine "$_s" | sh -n 2>"$WORK/mk.$_s.err"; then
+		ok "the $_s in the package Makefile is valid shell"
+	else
+		bad "the $_s in the package Makefile is valid shell"
+		sed 's/^/    /' "$WORK/mk.$_s.err"
+	fi
+done
+
+# The version is in three places by convention and drifting is silent: the
+# package says one thing and the install command in the README another.
+_mkver=$(mkvar PKG_VERSION)
+check "the README title states the package version" \
+	"$(sed -n '1s/^# luci-app-fw-live //p' "$ROOT/README.md")" "$_mkver"
+check "and so does every install command in it" \
+	"$(sed -n 's/.*luci-app-fw-live[-_]\([0-9][0-9.]*\)[-_].*/\1/p' "$ROOT/README.md" | sort -u)" \
+	"$_mkver"
+
 echo
 echo "fixture replay"
 

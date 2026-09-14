@@ -24,7 +24,7 @@ say() { echo; echo "=== $* ==="; }
 {
 	say "1. is the conntrack event stream usable at all"
 	command -v conntrack >/dev/null 2>&1 && echo "conntrack: $(command -v conntrack)" ||
-		echo "conntrack: MISSING, run opkg install conntrack"
+		echo "conntrack: MISSING, run $(command -v apk >/dev/null 2>&1 && echo 'apk add' || echo 'opkg install') conntrack"
 	echo "nf_conntrack_events: $(cat /proc/sys/net/netfilter/nf_conntrack_events 2>/dev/null || echo unreadable)"
 
 	say "2a. does conntrack -E flush per event when its output is not a terminal"

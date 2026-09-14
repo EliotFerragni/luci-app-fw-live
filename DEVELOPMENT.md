@@ -6,7 +6,9 @@ installing and configuring it.
 ## Repository layout
 
     package/luci-app-fw-live/   the OpenWrt package
-    build-ipk.sh                builds the .ipk without an SDK
+    build-ipk.sh                builds the .ipk without an SDK (24.10 and older)
+    build-apk.sh                builds the .apk without an SDK (25.12 and newer)
+    tools/pkg-meta.sh           what both builders read out of the package Makefile
     install.sh                  installs straight onto a running router
     tools/preview.py            runs the LuCI view with no router
     tools/capture-fixtures.sh   Phase 0, to be run ON the router
@@ -39,18 +41,58 @@ local prefixes the direction column is derived from.
 
 ## Building
 
-    ./build-ipk.sh
+    ./build-ipk.sh    OpenWrt 24.10 and older, -> luci-app-fw-live_<version>-<release>_all.ipk
+    ./build-apk.sh    OpenWrt 25.12 and newer, -> luci-app-fw-live-<version>-r<release>.apk
 
-No OpenWrt SDK needed. The package is shell, ucode and JavaScript only, so
-`PKGARCH:=all` and nothing is cross compiled. The version comes from
-`PKG_VERSION` and `PKG_RELEASE` in `package/luci-app-fw-live/Makefile`, and the
-result lands in the repository root as
-`luci-app-fw-live_<version>-<release>_all.ipk`.
+**`build-apk.sh` needs docker**, unless you have apk-tools 3 on the machine,
+which almost nobody does. It runs one `docker run --rm` against `alpine:edge`,
+pulling that image the first time: 8 MB, and the only thing either builder
+leaves on the machine. `docker rmi alpine:edge` takes it back. Everything else
+happens in the repository and in a temporary directory that goes on the way
+out. `build-ipk.sh` needs nothing but `tar`. Why is below.
+
+No OpenWrt SDK needed for either. The package is shell, ucode and JavaScript
+only, so `PKGARCH:=all` and nothing is cross compiled. Both read the version,
+the metadata, the dependencies, the conffiles and all three maintainer scripts
+out of `package/luci-app-fw-live/Makefile` through `tools/pkg-meta.sh`, so
+there is one copy of each and the two builders cannot drift apart.
+
+The `.ipk` is an ar archive of tarballs and `tar` is all it takes. The `.apk`
+is not: it is a signed ADB container, and the only thing that writes one is
+`apk mkpkg` from apk-tools 3. Note that this is **not** the `apk` on the
+router, which OpenWrt builds with `-Dminimal=true` and which has no `mkpkg`.
+`build-apk.sh` uses apk-tools from the host when it finds one, and otherwise
+runs `apk mkpkg` in an `alpine:edge` container, which carries a new enough
+apk-tools (3.0.7 against the 3.0.5 OpenWrt 25.12 ships). So either install
+apk-tools 3 or have docker; the script stops and says so when it finds neither.
+
+The container runs as root and chowns the staged tree, then hands it back to
+the calling user before it exits. Without that last part the temporary
+directory stays root-owned and the cleanup on the way out cannot remove it.
+
+apk records the owner of every file, so the staged tree has to be root's.
+Running as root or having `fakeroot` covers that on the host, and the container
+path is root anyway.
+
+What the `.apk` contains follows `include/package-pack.mk` from the OpenWrt
+tree, which is what the SDK would run. Two parts of it are easy to miss:
+
+- the file list and the conffile checksums under `/lib/apk/packages` are part
+  of the package payload rather than its metadata, and the list is generated
+  before the conffile bookkeeping so that it does not describe itself;
+- the maintainer scripts are not shipped as written. apk splits what opkg kept
+  in one script, so `postinst` is wrapped into both `post-install` and
+  `post-upgrade`, and `prerm` becomes `pre-deinstall`, which apk runs **only**
+  on a real removal. Verified against apk-tools 3.0.7: an install runs
+  `post-install`, an upgrade runs `post-upgrade` alone, and neither deinstall
+  script fires until the package is actually removed. That is why `prerm` can
+  ask opkg whether this is an upgrade and be right on both.
 
 ## Testing a change on a router
 
-`install.sh` copies the files in place without going through opkg, which is
-the fastest edit-and-try loop:
+`install.sh` copies the files in place without going through a package
+manager at all, which is the fastest edit-and-try loop and works the same on
+every release:
 
     scp -r . root@192.168.1.1:/tmp/luci-app-fw-live-src
     ssh root@192.168.1.1 'sh /tmp/luci-app-fw-live-src/install.sh'
@@ -176,14 +218,15 @@ publishes nothing: the upload happens at the moment the release is published.
    changed and no installed file did.
 2. Update the README: the version in the title and the filename in the install
    commands.
-3. Sanity check the build with `./build-ipk.sh`.
+3. Sanity check both builds with `./build-ipk.sh` and `./build-apk.sh`.
 4. Commit and push to `main`.
 5. On GitHub, Releases → Draft a new release. Set the tag to `v<PKG_VERSION>`
    (`v1.2.3` for `PKG_VERSION:=1.2.3`) targeting that commit, write the notes
    describing what changed, and publish. The release notes are the changelog;
    the repository does not keep one.
-6. Publishing triggers the workflow, which builds the `.ipk` and attaches it
-   to the release. Check the run finished and the asset is on the release page.
+6. Publishing triggers the workflow, which builds the `.ipk` and the `.apk`
+   and attaches both to the release. Check the run finished and both assets
+   are on the release page.
 
 The tag is created by GitHub when the release is published, so there is no
 need to tag by hand beforehand.

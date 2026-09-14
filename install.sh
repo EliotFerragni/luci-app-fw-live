@@ -30,8 +30,11 @@ fi
 
 [ -d /etc/init.d ] || { echo "This does not look like an OpenWrt system."; exit 1; }
 
+# 25.12 replaced opkg with apk, and no release has both.
+if command -v apk >/dev/null 2>&1; then PKG_ADD="apk add"; else PKG_ADD="opkg install"; fi
+
 command -v conntrack >/dev/null 2>&1 || \
-	echo "Warning: conntrack not found. Run opkg install conntrack, or accepted connections stay empty."
+	echo "Warning: conntrack not found. Run $PKG_ADD conntrack, or accepted connections stay empty."
 
 command -v ucode >/dev/null 2>&1 || [ -f /usr/lib/rpcd/ucode.so ] || \
 	echo "Warning: rpcd-mod-ucode does not seem to be installed; the LuCI page will have no backend."

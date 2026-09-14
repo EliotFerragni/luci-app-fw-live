@@ -1,3 +1,4 @@
 *.ipk
 *.tar.gz
 __pycache__/
+*.apk
