@@ -201,6 +201,27 @@ else
 	echo "$_apos"
 fi
 
+# ucode drops the backslash from a \] inside a bracket expression, so the
+# escaped spelling closes the class early and leaves a pattern that matches
+# nothing. A literal closing bracket has to be written first instead. This is
+# silent: the regex still compiles, it just never matches, and the ucode
+# backend is the one file that cannot be exercised off a router.
+_brk=$(awk '
+	{
+		line = $0
+		while (match(line, /\[[^]]*\\\]/)) {
+			print "    line " FNR ": " $0
+			line = substr(line, RSTART + RLENGTH)
+		}
+	}
+' "$ROOT/package/luci-app-fw-live/files/usr/share/rpcd/ucode/luci.fw_live.uc")
+if [ -z "$_brk" ]; then
+	ok "no escaped closing bracket inside a ucode bracket expression"
+else
+	bad "escaped closing brackets in the ucode backend, which match nothing"
+	echo "$_brk"
+fi
+
 echo
 echo "fixture replay"
 

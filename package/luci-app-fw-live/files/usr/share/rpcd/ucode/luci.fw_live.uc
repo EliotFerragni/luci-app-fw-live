@@ -90,7 +90,11 @@ function set_logging(req) {
 
 	for (let p in parts) {
 		p = trim(p);
-		if (!match(p, /^[A-Za-z0-9_@[\]-]{1,64}=[01]$/))
+		// The closing bracket is written first, which is how POSIX spells a
+		// literal one: ucode drops the backslash from a \] inside a bracket
+		// expression, so the escaped spelling ends the class early and the
+		// pattern then matches nothing at all.
+		if (!match(p, /^[]A-Za-z0-9_@[-]{1,64}=[01]$/))
 			continue;
 		n = n + 1;
 		if (n > 64)

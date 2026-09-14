@@ -410,3 +410,13 @@ Worth not repeating:
   the default rule run `make` in an empty build directory and fail.
 - Forgetting `/tmp/luci-modulecache` when clearing LuCI caches, so a newly
   installed page stays invisible until something else invalidates it.
+- **`\]` inside a bracket expression in the ucode backend**, which made every
+  logging checkbox fail with "Nothing valid to change." ucode's lexer drops the
+  backslash before a `]` in a bracket expression (`parse_escape` retains only
+  `^` there), so `/^[A-Za-z0-9_@[\]-]{1,64}=[01]$/` reached `regcomp` as
+  `^[A-Za-z0-9_@[]-]{1,64}=[01]$`: the class ended at the unescaped bracket and
+  the pattern matched nothing at all. It still compiled, so there was no error
+  anywhere, and `tools/preview.py` kept working because Python's `re` does
+  accept the escaped spelling. Write the literal bracket first instead,
+  `[]A-Za-z0-9_@[-]`, which means the same thing to Python, glibc and busybox.
+  `tests/run-tests.sh` now rejects the escaped spelling in the `.uc` file.

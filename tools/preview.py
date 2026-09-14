@@ -662,9 +662,9 @@ def serve(work, env_path, spools, port, formats, dark, live):
                 self.send_json(run_logging(work, env_path, ["--list"]))
             elif url.path == "/set_logging":
                 # the same shape the ucode backend enforces before anything
-                # reaches a command line
+                # reaches a command line, spelled exactly as it is there
                 args = [a for a in arg("set").split(",")
-                        if re.match(r"^[A-Za-z0-9_@\[\]-]{1,64}=[01]$", a)]
+                        if re.match(r"^[]A-Za-z0-9_@[-]{1,64}=[01]$", a)]
                 if not args:
                     self.send_json({"error": "Nothing valid to change."})
                 else:
