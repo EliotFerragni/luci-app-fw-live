@@ -168,7 +168,14 @@ in `tests/fixtures/` as the `router` case and `phase0.txt`.
   one does not, and fw4 accepts established traffic before any rule runs, so
   everything reaching a rule is a new connection and a matching conntrack
   event is positive proof the packet was allowed. An `unknown` event with such
-  a match is reported as `accept`, keeping its rule name.
+  a match is reported as `accept`, keeping its rule name, and the conntrack
+  event that proved it stops being a row of its own. The two are one
+  connection and the log half is the better record of it: it carries the rule
+  name and the bridge port, which a conntrack event never has. The counts
+  follow. Suppression reaches only what is still in this response: an event
+  delivered in an earlier poll is behind the cursor, so a pair that straddles
+  a poll boundary still shows twice. Conntrack events that resolved nothing
+  are untouched.
 
   The absence of a match proves nothing and is never read as a refusal: the
   accept feed may be off, or the event may have been trimmed. The accepted

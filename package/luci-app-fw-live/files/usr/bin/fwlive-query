@@ -127,10 +127,12 @@ NF < 15 { next }
 	# Only the positive half is inferred. No conntrack event is not proof of a
 	# refusal: the accepted feed may be off, or the event may have been
 	# trimmed, so those stay unknown rather than being guessed at.
+	ctkey = ""
 	if (s == "ct") {
 		if (now - $1 <= pair_recent) {
 			k = $6 SUBSEP $7 SUBSEP $8 SUBSEP $9 SUBSEP $10
 			if ($1 + 0 > ctts[k]) ctts[k] = $1 + 0
+			ctkey = k
 		}
 	}
 	else if ($4 == "unknown") {
@@ -138,7 +140,30 @@ NF < 15 { next }
 		if (k in ctts) {
 			d = ctts[k] - ($1 + 0)
 			if (d < 0) d = -d
-			if (d <= pair_window) { $4 = "accept"; resolved++ }
+			if (d <= pair_window) {
+				$4 = "accept"
+				resolved++
+				# The two are one connection, and the log event is the better
+				# half of it: it carries the rule name and the bridge port,
+				# which a conntrack event never has. So the conntrack row stops
+				# being an event of its own, here and in the counts.
+				#
+				# Only once per tuple. A rule that logs every packet of a flow
+				# produces several verdictless events against the single NEW
+				# event that resolves them all.
+				if (!(k in ctpaired)) {
+					ctpaired[k] = 1
+					counts["accept"]--
+					# Not in the ring means filtered out, or delivered in an
+					# earlier poll and already on the page. The first needs no
+					# suppressing and the second cannot be suppressed: the row
+					# is behind the cursor and this response cannot reach it.
+					if (k in ctslot && rsq["ct", ctslot[k]] == ctsq[k]) {
+						dead["ct", ctslot[k]] = 1
+						deadct++
+					}
+				}
+			}
 		}
 	}
 
@@ -164,13 +189,23 @@ NF < 15 { next }
 	ring[s, i] = $0
 	rts[s, i] = $1 + 0
 	rsq[s, i] = $2 + 0
+	dead[s, i] = 0
 	n[s]++
+
+	# Where this conntrack event landed, so a log event that pairs with it
+	# later in this same pass can strike it out. The sequence number is kept
+	# alongside because the ring wraps, and by then the slot may hold a
+	# different event entirely.
+	if (ctkey != "" && ctts[ctkey] == $1 + 0) {
+		ctslot[ctkey] = i
+		ctsq[ctkey] = $2 + 0
+	}
 }
 
 END {
 	avail["log"] = (n["log"] < lim) ? n["log"] : lim
 	avail["ct"] = (n["ct"] < lim) ? n["ct"] : lim
-	matched = n["log"] + n["ct"]
+	matched = n["log"] + n["ct"] - deadct
 
 	printf "{\"now\":%d,", now
 	printf "\"seq\":{\"log\":%d,\"ct\":%d},", seqmax["log"], seqmax["ct"]
@@ -193,8 +228,15 @@ END {
 		else
 			pick = (rsq["log", ka] >= rsq["ct", kb]) ? "log" : "ct"
 
-		if (pick == "log") { emit("log", ka, sep); ia++ }
-		else { emit("ct", kb, sep); ib++ }
+		kp = (pick == "log") ? ka : kb
+		if (pick == "log") ia++; else ib++
+
+		# A conntrack row struck out above: its log half is the one row this
+		# connection gets, so this slot is walked over without spending any of
+		# the limit on it.
+		if (dead[pick, kp]) continue
+
+		emit(pick, kp, sep)
 		sep = ","
 		out++
 	}

@@ -597,7 +597,18 @@ check "and the resolved count says how many were recovered" \
 	"$(sed -n 's/.*"resolved":\([0-9]*\).*/\1/p' "$WORK/rv.json")" "1"
 check "counts follow the resolution" \
 	"$(sed -n 's/.*\("counts":{[^}]*}\).*/\1/p' "$WORK/rv.json")" \
-	'"counts":{"accept":4,"drop":0,"reject":1,"unknown":2}'
+	'"counts":{"accept":3,"drop":0,"reject":1,"unknown":2}'
+
+# The log half is the one row the connection gets: it is the half that carries
+# the rule name and the bridge port. The conntrack events that resolved nothing
+# are events in their own right and stay.
+rvhas() {
+	grep -c "\"id\":\"$1\"" "$WORK/rv.json"
+}
+check "the conntrack event that resolved a log event is not also a row of its own" \
+	"$(rvhas ct:1)" "0"
+check "one that resolved nothing still is" "$(rvhas ct:2)" "1"
+check "and so is one whose log event already had a verdict" "$(rvhas ct:3)" "1"
 
 echo
 echo "synthetic buffer"

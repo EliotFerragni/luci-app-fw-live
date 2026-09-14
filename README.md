@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.3
+# luci-app-fw-live 1.0.4
 
 A live view of what your firewall is accepting and refusing, for OpenWrt. It
 shows connections as they happen, under **Status → Firewall Live**, with a
@@ -42,9 +42,8 @@ Two consequences:
   uci firewall rule; it then also arrives through the log feed, carrying its
   name. Two things to expect when you do: that event's verdict shows as
   **Unknown**, because fw4 puts only the rule's name in the log prefix and one
-  rule name can cover both traffic it allows and traffic it refuses; and if
-  the rule accepts, you get two rows for it, the named one and the conntrack
-  one. See [Naming one rule](#naming-one-rule).
+  rule name can cover both traffic it allows and traffic it refuses, unless
+  the conntrack feed can settle it. See [Naming one rule](#naming-one-rule).
 - **Nothing denied shows up until firewall logging is on.** See below.
 
 ## Requirements
@@ -61,8 +60,8 @@ Two consequences:
 `luci-app-fw-live_<version>_all.ipk` from the [Releases](../../releases) page.
 It is architecture independent, so the same file works on any target:
 
-    scp luci-app-fw-live_1.0.3-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.3-1_all.ipk'
+    scp luci-app-fw-live_1.0.4-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.4-1_all.ipk'
 
 **Option B: no package manager.** Copy the source tree to the router and run
 `install.sh` on it:
@@ -233,6 +232,10 @@ leaves a conntrack entry behind and a refused one does not, and fw4 accepts
 established traffic **before** any rule runs, so everything reaching a rule is
 a new connection. A matching conntrack event is therefore proof the packet was
 allowed, and such a row is reported as **Accepted**, keeping the rule's name.
+
+The conntrack event that proved it is then not shown a second time. The two
+are one connection, and the row that is kept is the one carrying the rule's
+name and the interface it came in on.
 
 Only that half is inferred. No conntrack entry is not proof of a refusal, so
 those rows stay **Unknown** rather than being guessed at: the accepted feed may
