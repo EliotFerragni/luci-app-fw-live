@@ -1,6 +1,7 @@
 'use strict';
 'require view';
 'require form';
+'require tools.widgets as widgets';
 'require rpc';
 'require ui';
 
@@ -295,6 +296,32 @@ return view.extend({
 			  'mostly devices talking to the router itself.'));
 		o.default = '0';
 		o.rmempty = false;
+
+		s = m.section(form.NamedSection, 'main', 'fw_live', _('Local networks'));
+		s.anonymous = true;
+		s.addremove = false;
+		s.description = _('What counts as local decides the direction column, In, Out or ' +
+			'Local, and what the setting above leaves out. Every address this router ' +
+			'holds is found on its own; these two are for saying it differently.');
+
+		// The same control the rest of LuCI uses to pick networks, so the list
+		// carries each one's device and reads like Network -> Interfaces does.
+		o = s.option(widgets.NetworkSelect, 'local_network', _('Local interfaces'),
+			_('Leave this empty to use every interface, which is the default and is ' +
+			  'right on most routers. Pick some to count only those, for a router that ' +
+			  'holds an address somewhere you would not call local.'));
+		o.multiple = true;
+		o.nocreate = true;
+		o.rmempty = true;
+
+		o = s.option(form.DynamicList, 'local_subnet', _('Extra local subnets'),
+			_('Prefixes no interface announces, as address/length. A tunnel gives this ' +
+			  'router one address on the link while the site on the far side is a route, ' +
+			  'so a VPN subnet is invisible here and its traffic reads as foreign until ' +
+			  'it is named.'));
+		o.datatype = 'cidr';
+		o.placeholder = '192.168.50.0/24';
+		o.rmempty = true;
 
 		s = m.section(form.NamedSection, 'main', 'fw_live', _('Buffer'));
 		s.anonymous = true;

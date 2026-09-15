@@ -11,8 +11,23 @@
 # The address is whatever the interface holds; the follower masks it down to
 # the prefix itself, so there is no need to do that here.
 
-RUN=/tmp/fw-live
+RUN=${FWLIVE_RUN:-/tmp/fw-live}
 OUT="$RUN/subnets"
+
+# Which uci network interfaces count as local, and any prefix that no
+# interface announces. The second is not a convenience: what the router holds
+# is not the same question as what is local. A tunnel gives the router one
+# address on the link, while the site on the far side is a route, so a VPN
+# subnet is invisible to netifd and every packet to it reads as foreign.
+LOCAL_NETWORK=${FWLIVE_LOCAL_NETWORK:-}
+LOCAL_SUBNET=${FWLIVE_LOCAL_SUBNET:-}
+
+if [ -r /lib/functions.sh ]; then
+	. /lib/functions.sh
+	config_load fw-live 2>/dev/null
+	config_get LOCAL_NETWORK main local_network "$LOCAL_NETWORK"
+	config_get LOCAL_SUBNET main local_subnet "$LOCAL_SUBNET"
+fi
 
 mkdir -p "$RUN" || exit 1
 
@@ -41,14 +56,58 @@ emit() {
 	'
 }
 
+# A prefix written by hand, as address/length. The follower would drop a
+# malformed one anyway, but a cache that only holds what works is what lets
+# fwlive-status count usable prefixes rather than lines.
+manual() {
+	awk '
+		{
+			i = index($0, "/")
+			if (i < 2 || i == length($0)) next
+			a = substr($0, 1, i - 1)
+			m = substr($0, i + 1)
+			if (m !~ /^[0-9]+$/) next
+			fam = (index(a, ":") > 0) ? 6 : 4
+			if (m + 0 < 1) next
+			if (fam == 4 && (m + 0 > 32 || a !~ /^[0-9.]+$/)) next
+			if (fam == 6 && (m + 0 > 128 || a !~ /^[0-9A-Fa-f:]+$/)) next
+			print fam "\t" a "\t" m + 0
+		}
+	'
+}
+
 {
 	# Every address the router itself holds, plus the prefixes it delegates,
 	# which is what makes a LAN host on a delegated /64 count as local.
-	ubus call network.interface dump 2>/dev/null | jsonfilter \
-		-e '@.interface[*]["ipv4-address"][*]' \
-		-e '@.interface[*]["ipv6-address"][*]' \
-		-e '@.interface[*]["ipv6-prefix"][*]' \
-		-e '@.interface[*]["ipv6-prefix-assignment"][*]' 2>/dev/null | emit
+	#
+	# With no interfaces named, every interface counts, which is what this
+	# did before the option existed and is right for most routers. Naming
+	# them is for the case where an interface the router holds an address on
+	# is not somewhere you consider local, a wan being the obvious one.
+	if [ -z "$LOCAL_NETWORK" ]; then
+		ubus call network.interface dump 2>/dev/null | jsonfilter \
+			-e '@.interface[*]["ipv4-address"][*]' \
+			-e '@.interface[*]["ipv6-address"][*]' \
+			-e '@.interface[*]["ipv6-prefix"][*]' \
+			-e '@.interface[*]["ipv6-prefix-assignment"][*]' 2>/dev/null | emit
+	else
+		for _n in $LOCAL_NETWORK; do
+			# Reaches a command line, so anything that is not a uci
+			# section name is dropped rather than quoted around.
+			case "$_n" in
+				''|*[!A-Za-z0-9_.-]*) continue ;;
+			esac
+			ubus call "network.interface.$_n" status 2>/dev/null | jsonfilter \
+				-e '@["ipv4-address"][*]' \
+				-e '@["ipv6-address"][*]' \
+				-e '@["ipv6-prefix"][*]' \
+				-e '@["ipv6-prefix-assignment"][*]' 2>/dev/null | emit
+		done
+	fi
+
+	for _s in $LOCAL_SUBNET; do
+		printf '%s\n' "$_s"
+	done | manual
 
 	# The router talking to itself is local by definition, and neither
 	# loopback nor link-local shows up in the interface dump.

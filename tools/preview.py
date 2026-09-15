@@ -110,7 +110,8 @@ STATUS = {"status": {
     "ignore unknown": "no",
     "merge rules": "yes, 61 rows carry a rule name they would not otherwise have",
     "event rate": "7.6/s accepted, 3.6/s denied",
-    "local prefixes": "8 known",
+    "local prefixes": "6: 192.168.1.1/24, 10.0.30.1/24, 192.168.50.0/24, "
+                      "fd00:abc::1/64, ::1/128, fe80::/10",
 }}
 
 # Close enough to LuCI's bootstrap themes to be honest about the layout. The
@@ -457,6 +458,7 @@ const ui = {
 const form = {
 	NamedSection: 'NamedSection', DummyValue: 'DummyValue', Value: 'Value',
 	Flag: 'Flag', ListValue: 'ListValue', Button: 'Button',
+	DynamicList: 'DynamicList',
 	Map: function (cfg, title, descr) {
 		this.secs = [];
 		this.section = function (kind, name, type, label) {
@@ -497,6 +499,21 @@ const form = {
 					}
 					else if (o.type === 'Button') {
 						val.appendChild(E('button', { 'class': 'cbi-button' }, o.inputtitle || _('Go')));
+					}
+					else if (o.type === 'NetworkSelect') {
+						// luci-base draws each network with its device; the shape
+						// is what matters here, not the icons
+						val.appendChild(E('div', { 'class': 'cbi-dropdown', style:
+							'border:1px solid rgba(128,128,128,0.4);border-radius:3px;' +
+							'padding:4px 8px;display:inline-block;min-width:24em' },
+							FAKE_NETWORKS.map(function (n) {
+								return E('span', { style: 'margin-right:10px;opacity:0.75' }, n + ':');
+							}).concat([ E('span', { style: 'float:right;opacity:0.5' }, '\u25be') ])));
+					}
+					else if (o.type === 'DynamicList') {
+						val.appendChild(E('input', { type: 'text', 'class': 'cbi-input-text',
+							placeholder: o.placeholder || '' }));
+						val.appendChild(E('button', { 'class': 'cbi-button', style: 'margin-left:6px' }, '+'));
 					}
 					else if (o.rawhtml) val.innerHTML = v;
 					else val.textContent = String(v);
@@ -571,8 +588,14 @@ def write_settings_page(work, dark=False, fixture=None):
 <script>
 window.FIXTURE = %s;
 %s
-const mod = new Function('view', 'form', 'rpc', 'ui', 'E', '_', 'L',
-	document.getElementById('viewsrc').textContent)(view, form, rpc, ui, E, _, L);
+// The names the settings view requires, in the order it lists them. network
+// comes from the shared stubs above, which both pages get.
+// What the settings view requires, in the order it lists them. tools.widgets
+// is luci-base's, and only the one control used from it is stubbed.
+const FAKE_NETWORKS = [ 'lan', 'guest', 'wan', 'wg0' ];
+const widgets = { NetworkSelect: 'NetworkSelect' };
+const mod = new Function('view', 'form', 'widgets', 'rpc', 'ui', 'E', '_', 'L',
+	document.getElementById('viewsrc').textContent)(view, form, widgets, rpc, ui, E, _, L);
 mod.load().then(function (res) {
 	return mod.render(res);
 }).then(function (node) {

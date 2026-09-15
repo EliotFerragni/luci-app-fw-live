@@ -449,6 +449,15 @@ Worth not repeating:
   the default rule run `make` in an empty build directory and fail.
 - Forgetting `/tmp/luci-modulecache` when clearing LuCI caches, so a newly
   installed page stays invisible until something else invalidates it.
+- **A second `const network` in the preview's settings page**, from adding
+  `'require network'` to `settings.js` without noticing that `tools/preview.py`
+  already declares that stub for the live page. A duplicate `const` is a parse
+  error, so the whole inline script died before the `catch` that is there to
+  print what went wrong: `--screenshots` produced a 1280x20 blank image and
+  said nothing. Adding a `require` to a view means the preview has to pass that
+  name too, in the order the view lists them, and the way to check it is
+  `node --check` on the inline script the page generates rather than the view
+  file, which parses fine on its own.
 - **`sed 's|^\.|/|'` over `find .` output**, which put `//etc/config/fw-live`
   into the apk's file list instead of `/etc/config/fw-live`. The pattern
   matches the dot alone, so the slash `find` already printed survives and the

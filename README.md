@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.5
+# luci-app-fw-live 1.0.6
 
 A live view of what your firewall is accepting and refusing, for OpenWrt. It
 shows connections as they happen, under **Status → Firewall Live**, with a
@@ -70,13 +70,13 @@ same file works on any target. Take the one your release can install, from the
 
 OpenWrt 25.12 and newer, `luci-app-fw-live-<version>.apk`:
 
-    scp luci-app-fw-live-1.0.5-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.5-r1.apk'
+    scp luci-app-fw-live-1.0.6-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.6-r1.apk'
 
 OpenWrt 24.10 and older, `luci-app-fw-live_<version>_all.ipk`:
 
-    scp luci-app-fw-live_1.0.5-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.5-1_all.ipk'
+    scp luci-app-fw-live_1.0.6-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.6-1_all.ipk'
 
 **Option B: no package manager.** Copy the source tree to the router and run
 `install.sh` on it:
@@ -393,6 +393,8 @@ The same options live in `/etc/config/fw-live`:
 | `max_rate` | `200` | events/second per feed before the excess is shed |
 | `poll_interval` | `2` | how often the page asks for new events, seconds |
 | `ignore_local` | `0` | drop events with both ends on a local network |
+| `local_network` | every interface | list: uci network interfaces that count as local |
+| `local_subnet` | none | list: extra local prefixes, as `address/length` |
 | `merge_rules` | `1` | fold a rule's log line into the verdict line for the same packet |
 | `ignore_unknown` | `0` | drop log events whose prefix does not state a verdict |
 | `time_format` | `auto` | clock: `auto`, `24` or `12` |
@@ -414,6 +416,13 @@ far more than it should, the excess is counted and dropped rather than allowed
 to fill RAM; the count shows up as `discarded` in the status output and on the
 page. `ignore_local` is worth turning on if most of what you see is devices
 talking to the router itself.
+
+What counts as local decides the direction column and what `ignore_local`
+leaves out. Every address the router holds is found on its own, so both list
+options are usually unset. `local_subnet` is the one worth knowing about: a
+tunnel gives the router one address on the link while the site on the far side
+is a route, so a VPN subnet is invisible to netifd and its traffic reads as
+foreign until it is named.
 
 ## Troubleshooting
 

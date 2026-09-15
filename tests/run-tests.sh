@@ -757,6 +757,67 @@ if command -v python3 >/dev/null 2>&1; then
 fi
 
 echo
+echo "local prefixes"
+
+# What the follower calls local comes out of fwlive-subnets. Off a router there
+# is no ubus, so the interface half produces nothing and what is left is the
+# half this can actually check: the prefixes written by hand, which exist
+# because a VPN subnet is a route rather than an address and netifd never
+# reports it.
+subnets_for() {
+	rm -rf "$WORK/sn"
+	mkdir -p "$WORK/sn"
+	FWLIVE_RUN=$WORK/sn FWLIVE_LOCAL_SUBNET="$1" $RUNSH "$BIN/fwlive-subnets" >/dev/null 2>&1
+	cat "$WORK/sn/subnets" 2>/dev/null
+}
+
+# The three that are always local, in sort -u order, and nothing else.
+FIXED="4	127.0.0.1	8
+6	::1	128
+6	fe80::	10"
+
+check "with nothing named, only the router itself is local" \
+	"$(subnets_for '')" "$FIXED"
+
+check "a subnet written by hand is added to them" \
+	"$(subnets_for '192.168.50.0/24')" \
+	"4	127.0.0.1	8
+4	192.168.50.0	24
+6	::1	128
+6	fe80::	10"
+
+check "and so is an IPv6 one" \
+	"$(subnets_for 'fd00:abc::/48')" \
+	"4	127.0.0.1	8
+6	::1	128
+6	fd00:abc::	48
+6	fe80::	10"
+
+# A bad prefix must be dropped here rather than written out. The follower would
+# skip it anyway, but then fwlive-status counts a prefix that does nothing.
+for _bad in '10.0.0.0/99' '1.2.3.4/0' 'nonsense' '172.16.0.0/' '/24' '10.0.0.0/x' 'fd00::/129'; do
+	check "a prefix of '$_bad' is refused" "$(subnets_for "$_bad")" "$FIXED"
+done
+
+check "the good ones survive being listed next to the bad" \
+	"$(subnets_for '10.9.0.0/16 nonsense 10.0.0.0/99 192.168.50.0/24')" \
+	"4	10.9.0.0	16
+4	127.0.0.1	8
+4	192.168.50.0	24
+6	::1	128
+6	fe80::	10"
+
+# A count cannot be checked against anything, so the status names them.
+rm -rf "$WORK/sn"
+mkdir -p "$WORK/sn"
+FWLIVE_RUN=$WORK/sn FWLIVE_LOCAL_SUBNET='192.168.50.0/24 fd00:abc::/48' \
+	$RUNSH "$BIN/fwlive-subnets" >/dev/null 2>&1
+check "the status names every local prefix rather than counting them" \
+	"$(FWLIVE_RUN=$WORK/sn $RUNSH "$BIN/fwlive-status" 2>/dev/null |
+		sed -n 's/^local prefixes: *//p')" \
+	"5: 127.0.0.1/8, 192.168.50.0/24, ::1/128, fd00:abc::/48, fe80::/10"
+
+echo
 echo "stale service detection"
 
 # fwlive-status has to tell an option that is configured from an option that is

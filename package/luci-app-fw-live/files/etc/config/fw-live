@@ -18,6 +18,21 @@ config fw_live 'main'
 	# Drop events where both endpoints are on a local network, which is most
 	# of the router talking to itself.
 	option ignore_local '0'
+	# What counts as local, which decides the direction column and what
+	# ignore_local leaves out. Every address the router holds is found on its
+	# own, so both of these are usually unset.
+	#
+	# Name uci network interfaces to count only those; with none named every
+	# interface counts, which is right on most routers.
+	#	list local_network 'lan'
+	#	list local_network 'guest'
+	#
+	# Prefixes no interface announces. A tunnel gives the router one address
+	# on the link while the site on the far side is a route, so a VPN subnet
+	# is invisible to netifd and its traffic reads as foreign until it is
+	# named here.
+	#	list local_subnet '192.168.50.0/24'
+	#	list local_subnet 'fd00:abc::/48'
 	# One packet can be logged twice, once by the rule it matched and again by
 	# the chain that refused it. Fold those two lines into one row carrying
 	# the rule's name and the real verdict.

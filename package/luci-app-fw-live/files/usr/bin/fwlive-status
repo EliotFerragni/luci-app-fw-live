@@ -308,13 +308,21 @@ else
 	echo "merge rules:       no"
 fi
 
-# Count what the follower would actually accept, not how many lines the file
-# has: a malformed prefix cache that still has lines in it would otherwise
-# report itself as healthy while every direction came out unknown.
+# What the follower would actually accept, not what the file happens to hold: a
+# malformed prefix cache that still has lines in it would otherwise report
+# itself as healthy while every direction came out unknown.
+#
+# Listed rather than counted. A count cannot be checked against anything: three
+# of these are always present, an interface with no address contributes none
+# and one with IPv6 contributes several, so the only way to see that a named
+# interface gave nothing is to read what is there.
+_usable='NF >= 3 && ($1 == "4" || $1 == "6") && $3 + 0 > 0'
 SUBNETS=0
-[ -f "$RUN/subnets" ] && SUBNETS=$(awk 'NF >= 3 && ($1 == "4" || $1 == "6") && $3 + 0 > 0 { n++ } END { print n + 0 }' "$RUN/subnets")
+[ -f "$RUN/subnets" ] && SUBNETS=$(awk "$_usable"' { n++ } END { print n + 0 }' "$RUN/subnets")
 if [ "$SUBNETS" -gt 0 ]; then
-	echo "local prefixes:    $SUBNETS known"
+	echo "local prefixes:    $SUBNETS: $(awk "$_usable"' {
+		printf "%s%s/%s", (n++ ? ", " : ""), $2, $3
+	} END { print "" }' "$RUN/subnets")"
 else
 	echo "local prefixes:    none usable, so direction is reported as unknown"
 	echo "prefix fix:        /usr/bin/fwlive-subnets"
