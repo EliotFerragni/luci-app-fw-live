@@ -39,6 +39,41 @@ re-running on a different build or after a major upgrade:
 replay case, including the part the capture script cannot get for you: the
 local prefixes the direction column is derived from.
 
+## How the two feeds are joined
+
+The README says what a user sees; this is the part behind it. `CLAUDE.md` has
+the full reasoning and the hardware captures it came from, including the
+rejected alternatives such as NFLOG, which fw4 cannot express.
+
+fw4 writes a **verdict** into the prefixes it generates itself (`reject wan
+in: `), but a rule logged through `option log '1'` gets only its own **name**.
+A name is not a verdict: a rule called `Block-Internet` was captured logging
+both packets it let through to a local resolver and packets it refused to the
+internet, under one identical prefix. So a verdict is arrived at three ways,
+in this order:
+
+1. **From the prefix**, when fw4 put one there.
+2. **By pairing two log lines** (`merge_rules`, in the follower). A refused
+   packet is usually logged twice, once by the rule it matched and once by the
+   chain that refuses it, and the two carry the same IP `ID=`. They become one
+   row with the name from the first and the verdict from the second. Several
+   rules can log one packet, in which case the Rule column becomes the path it
+   took, `A > B`.
+3. **Against the conntrack feed** (in `fwlive-query`). A packet that was
+   allowed leaves a conntrack entry and a refused one does not, and fw4 accepts
+   established traffic before any rule runs, so a matching conntrack event is
+   proof the packet was allowed. That row becomes Accepted and keeps its rule
+   name, and the conntrack event is not also shown as a row of its own.
+
+Only the positive half of 3 is inferred. The absence of a conntrack event is
+never read as a refusal, because the accept feed may be off or the event may
+have been trimmed, so what is left over stays `unknown`.
+
+What deliberately does **not** get folded together: a broadcast flooded to four
+bridge ports is four log lines sharing an IP `ID=` and a five tuple, differing
+only in which port they left by. Those are four forwarding decisions, so the
+match key includes the interfaces and they stay four rows.
+
 ## Building
 
     ./build-ipk.sh    OpenWrt 24.10 and older, -> luci-app-fw-live_<version>-<release>_all.ipk
