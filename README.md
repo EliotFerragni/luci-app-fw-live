@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.6
+# luci-app-fw-live 1.0.7
 
 A live view of what your firewall is accepting and refusing, for OpenWrt.
 Connections appear as they happen, under **Status → Firewall Live**.
@@ -58,13 +58,13 @@ architecture independent, so the same file works on any target.
 
 OpenWrt 25.12 and newer:
 
-    scp luci-app-fw-live-1.0.6-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.6-r1.apk'
+    scp luci-app-fw-live-1.0.7-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.7-r1.apk'
 
 OpenWrt 24.10 and older:
 
-    scp luci-app-fw-live_1.0.6-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.6-1_all.ipk'
+    scp luci-app-fw-live_1.0.7-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.7-1_all.ipk'
 
 **Without a package manager**, copy the source tree to the router and run
 `install.sh` on it. `install.sh --remove` undoes it.

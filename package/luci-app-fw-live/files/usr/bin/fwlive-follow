@@ -70,11 +70,23 @@ UPTIME_FILE=${FWLIVE_UPTIME:-/proc/uptime}
 LOGREAD=${FWLIVE_LOGREAD:-logread}
 CONNTRACK=${FWLIVE_CONNTRACK:-conntrack}
 
+# What the parser asks for the wall clock, overridable for the same reason as
+# the two readers above. It is run through a shell, and busybox resolves date
+# as an applet before it looks at PATH, so a test has to name its own here too.
+CLOCK_CMD=${FWLIVE_CLOCK:-date +%s}
+
+# A router has no battery clock. It comes up in 1970, or wherever sysfixtime
+# and the last saved time leave it, and ntpd steps it right seconds to minutes
+# later, which is the window this service starts in. So the boot epoch worked
+# out here is a first guess, and the parser re-derives it as it goes; giving
+# FWLIVE_BOOT pins it instead, which is what makes a replay reproducible.
 BOOT=${FWLIVE_BOOT:-}
+RECLOCK=
 if [ -z "$BOOT" ]; then
 	_up=$(awk '{ print int($1); exit }' "$UPTIME_FILE" 2>/dev/null)
 	case "$_up" in ''|*[!0-9]*) _up=0 ;; esac
 	BOOT=$(( $(date +%s) - _up ))
+	RECLOCK=1
 fi
 
 PARSER='
@@ -171,6 +183,53 @@ function direction(sa, da, fam,   ls, ld) {
 	return "-"
 }
 
+# Add the step to every event already spooled. They happened when they
+# happened; it is the clock that was wrong, so the stamps written under it are
+# wrong by exactly the same amount and are recoverable. Rewritten and renamed
+# in, like the trim, so a reader never sees a half written file. seq is what
+# the cursor is made of, so nothing a page holds is disturbed by this.
+function restamp(d,   l, n, i) {
+	n = 0
+	while ((getline l < spool) > 0) {
+		i = index(l, "\t")
+		if (i > 0) print (substr(l, 1, i - 1) + d) substr(l, i) > tmpspool
+		else print l > tmpspool
+		n++
+	}
+	close(spool)
+	if (n == 0) return
+	close(tmpspool)
+	system("mv -f " tmpspool " " spool)
+}
+
+# Re-derive the boot epoch from the clock as it is now. A router has no battery
+# clock, so this service routinely starts before ntpd has stepped the time
+# right, and a boot epoch worked out once at startup would carry that error on
+# every event for as long as the service ran. Reading the clock is a fork, so
+# this happens at most once a second and only when there is an event to stamp.
+#
+# Anything under two seconds is the truncation in the two uptime reads, not a
+# step, and adopting it would only make the stamps jitter.
+function reclock(   l, n, d) {
+	n = 0
+	if ((clock_cmd | getline l) > 0) n = int(l)
+	close(clock_cmd)
+	if (n <= 0) return
+	d = (n - up_sec) - boot
+	if (d < 2 && d > -2) return
+	boot += d
+	last_warn += d
+	cur_sec = 0; cur_n = 0
+	restamp(d)
+	# What the rows in the spool are stamped under, so that a parser the feed
+	# loop restarts picks up where this one left off rather than going back to
+	# the startup guess and restamping a correct buffer into a wrong one.
+	printf "%d\n", boot > boot_file
+	fflush(boot_file)
+	close(boot_file)
+	system("logger -t fw-live \"clock moved " d "s, restamped the " mode " buffer\"")
+}
+
 # Wall clock seconds, as boot epoch plus uptime, because busybox awk has no
 # time functions. The uptime source is a variable rather than a literal so a
 # replay can pin it: the rate limiter counts per second, and a clock that ticks
@@ -184,6 +243,7 @@ function now(   l, t) {
 		t = int(_up[1])
 	}
 	close(uptime_file)
+	if (boot_file != "" && t != up_sec) { up_sec = t; reclock() }
 	return boot + t
 }
 
@@ -286,6 +346,17 @@ BEGIN {
 	pend_valid = 0
 	merge_rules = merge_rules + 0
 	cur_sec = 0; cur_n = 0; last_warn = 0
+	boot = boot + 0
+	# The spool outlives a parser, so the boot epoch its rows were stamped
+	# under has to as well, or the first correction here would shift rows that
+	# are already right.
+	if (boot_file != "") {
+		if ((getline _b < boot_file) > 0 && int(_b) > 0) boot = int(_b)
+		close(boot_file)
+	}
+	# So that the first event re-derives the clock before it is stamped, rather
+	# than being stamped under whatever the shell saw at startup.
+	up_sec = -1
 	load_subnets()
 	write_stats()
 	# Make sure the spool exists even for a feed that never produces an event,
@@ -494,6 +565,8 @@ parse() {
 	    -v subnets="$RUN/subnets" \
 	    -v boot="$BOOT" \
 	    -v uptime_file="$UPTIME_FILE" \
+	    -v boot_file="${RECLOCK:+$RUN/boot.$1}" \
+	    -v clock_cmd="$CLOCK_CMD" \
 	    -v keep="$BUFFER_SIZE" \
 	    -v trim_every="$TRIM_EVERY" \
 	    -v max_rate="$MAX_RATE" \
@@ -583,6 +656,7 @@ rm -f "$RUN/feed.log" "$RUN/feed.ct"
 : > "$RUN/events.log"
 : > "$RUN/events.ct"
 rm -f "$RUN/events.log.new" "$RUN/events.ct.new" "$RUN/stats.log" "$RUN/stats.ct"
+rm -f "$RUN/boot.log" "$RUN/boot.ct"
 
 [ -s "$RUN/subnets" ] || /usr/bin/fwlive-subnets >/dev/null 2>&1
 
@@ -691,7 +765,8 @@ shutdown() {
 	kill_feed ct
 	rm -f "$FIFO_LOG" "$FIFO_CT" "$RUN/reader.log.pid" "$RUN/reader.ct.pid" \
 	      "$RUN/ticker.log.pid" "$RUN/ticker.ct.pid" \
-	      "$RUN/parser.log.pid" "$RUN/parser.ct.pid" "$RUN/running"
+	      "$RUN/parser.log.pid" "$RUN/parser.ct.pid" "$RUN/running" \
+	      "$RUN/boot.log" "$RUN/boot.ct"
 	exit 0
 }
 trap shutdown INT TERM

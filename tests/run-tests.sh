@@ -358,6 +358,70 @@ check "the newest kept event is the last one in" \
 check "nothing is lost or duplicated" "$((KEPT + TRIMMED))" "1000"
 
 echo
+echo "a clock corrected after the service started"
+
+# A router has no battery clock, so the follower routinely starts before ntpd
+# has stepped the time right. The boot epoch is re-derived as it goes and the
+# step is applied to what is already spooled, so an event does not keep a stamp
+# taken from a clock that was hours out. Both sources are pinned here: the
+# parser asks for the wall clock through FWLIVE_CLOCK for the same reason it
+# reads uptime through FWLIVE_UPTIME, because busybox resolves date as an
+# applet before it looks at PATH.
+clocked() {
+	# $1 uptime seconds, $2 epoch, $3 input file
+	printf '%s.5 2000.0\n' "$1" > "$WORK/uptime"
+	echo "$2" > "$WORK/now"
+	FWLIVE_CLOCK="cat $WORK/now" $RUNSH "$BIN/fwlive-follow" --parse ct < "$3"
+}
+
+one_ct() {
+	# $1 source host octet, $2 out file
+	printf '    [NEW] tcp      6 120 SYN_SENT src=10.0.0.%s dst=203.0.113.9 sport=1111 dport=443\n' \
+		"$1" > "$2"
+}
+
+rm -f "$RUN/events.ct" "$RUN/stats.ct" "$RUN/boot.ct"
+one_ct 5 "$WORK/ct1.txt"
+one_ct 6 "$WORK/ct2.txt"
+clocked 1000 1800000000 "$WORK/ct1.txt"
+check "an event is stamped from the clock, not from the epoch at startup" \
+	"$(cut -f1 "$RUN/events.ct")" "1800000000"
+
+# 11 hours back, which is the size of the correction that prompted this.
+clocked 1001 1799960401 "$WORK/ct2.txt"
+check "an event after the step is stamped under the corrected clock" \
+	"$(sed -n 2p "$RUN/events.ct" | cut -f1)" "1799960401"
+check "and the event spooled before it is corrected by the same amount" \
+	"$(sed -n 1p "$RUN/events.ct" | cut -f1)" "1799960400"
+
+# The spool outlives a parser, and the feed loop starts a new one whenever its
+# reader dies. Without the boot epoch on disk that parser would start from the
+# startup guess again and restamp a buffer that is already right.
+clocked 1002 1799960402 "$WORK/ct1.txt"
+check "a restarted parser leaves a correct buffer alone" \
+	"$(sed -n 1p "$RUN/events.ct" | cut -f1)" "1799960400"
+check "and carries on from the corrected clock" \
+	"$(sed -n 3p "$RUN/events.ct" | cut -f1)" "1799960402"
+
+# A second either way is the truncation in the two uptime reads, not the clock
+# moving, and adopting it would only make the stamps jitter.
+clocked 1003 1799960404 "$WORK/ct1.txt"
+check "a second of jitter is not read as a step" \
+	"$(sed -n 1p "$RUN/events.ct" | cut -f1)" "1799960400"
+
+# Everything else in this file pins FWLIVE_BOOT, which is what keeps a replay
+# reproducible, so it has to be the thing that turns the re-derivation off.
+printf '12345.67 98765.43\n' > "$WORK/uptime"
+rm -f "$RUN/events.ct" "$RUN/boot.ct"
+parse ct "$WORK/ct1.txt"
+check "FWLIVE_BOOT pins the clock and nothing goes looking for it" \
+	"$(cut -f1 "$RUN/events.ct")" "1757672345"
+check "and nothing is written to disk for it" \
+	"$([ -e "$RUN/boot.ct" ] && echo yes || echo no)" "no"
+
+rm -f "$RUN/events.ct" "$RUN/stats.ct" "$RUN/boot.ct"
+
+echo
 echo "merge_rules off"
 
 rm -f "$RUN/events.log" "$RUN/stats.log"

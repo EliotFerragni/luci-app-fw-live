@@ -162,7 +162,7 @@ before committing.
 The `FWLIVE_` variables are what make this possible: `FWLIVE_RUN` sets the
 spool directory, `FWLIVE_PIDFILE` points `fwlive-status` at a pid file it can
 write, `FWLIVE_LOGREAD` and `FWLIVE_CONNTRACK` put something else behind the
-two feeds, `FWLIVE_BOOT` and `FWLIVE_UPTIME` pin the clock, and
+two feeds, `FWLIVE_BOOT`, `FWLIVE_UPTIME` and `FWLIVE_CLOCK` pin the clock, and
 `FWLIVE_MAX_RATE`, `FWLIVE_BUFFER_SIZE`, `FWLIVE_IGNORE_LOCAL` and
 `FWLIVE_IGNORE_UNKNOWN` set the defaults used when `/etc/config/fw-live`
 cannot be read. uci wins over all of them on a router.
@@ -174,6 +174,9 @@ earlier in `PATH` is simply ignored by the shell the router runs.
 Pinning the clock matters more than it sounds: a captured feed is replayed in
 a few tens of milliseconds, so whether `/proc/uptime` ticks over partway
 through decides what the per second rate limiter does with the tail of it.
+Setting `FWLIVE_BOOT` is what pins it, and it is also what stops the parser
+re-deriving the boot epoch as it goes; leave it unset and set `FWLIVE_CLOCK`
+instead to drive that correction from a file a test controls.
 
 Running one feed by hand is often faster than reasoning about it:
 

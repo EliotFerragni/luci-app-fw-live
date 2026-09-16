@@ -225,6 +225,9 @@ trailing empty field cannot be lost.
 
 - `ts` is stamped by the follower at read time. Do not trust the kernel's
   `[12345.67]` uptime stamp and do not depend on `conntrack -o timestamp`.
+  busybox awk has no time functions, so it is boot epoch plus `/proc/uptime`,
+  and the boot epoch is re-derived as the parser runs rather than worked out
+  once: see the clock entry below.
 - `seq` is monotonic **per source**, so ordering and the incremental cursor
   are exact even within one second.
 - `src` is `log` or `ct`, and doubles as the parser's mode.
@@ -312,6 +315,9 @@ shell, so nothing else can reach a command line.
   update the version in the README title and install commands to match. There
   is no changelog: what changed goes in the GitHub release notes.
   `DEVELOPMENT.md` has the full release procedure.
+- Commit messages are short: a subject line, and a body only when the subject
+  genuinely cannot carry it. The reasoning belongs in this file, where it is
+  read, rather than in a history nobody walks.
 - Documentation is split by audience: anything a user of the package needs
   goes in `README.md`, anything only a contributor needs goes in
   `DEVELOPMENT.md`.
@@ -504,6 +510,27 @@ Worth not repeating:
   parser included: a parser is released only by end of file, so one whose
   reader outlived its follower is beyond every other kind of reach. That is
   also why the parser pid is now recorded at all.
+- **A boot epoch latched once at startup**, which put every event eleven hours
+  into the future after a reboot. Timestamps are boot epoch plus
+  `/proc/uptime`, and that epoch was `date +%s` minus uptime, read once when
+  the follower started. A router has no battery clock: it comes up in 1970, or
+  wherever `sysfixtime` and the RTC leave it, and ntpd steps it right seconds
+  to minutes later, which is exactly the window a boot time service starts in.
+  The error the follower captured in that moment was then carried by every
+  event for as long as the service ran, and a restart was the only thing that
+  cleared it. The parser re-derives the epoch instead, when the uptime second
+  turns over and there is an event to stamp, which bounds it to one `date` per
+  second per feed on a busy router and none at all on an idle one. A move of
+  two seconds or more is a step rather than the truncation in the two uptime
+  reads, and the step is added to every event already spooled: they happened
+  when they happened, it was the clock that was wrong, so the stamps taken
+  under it are wrong by exactly that much and are recoverable. Restamping is
+  safe for the page because the cursor is made of `seq`, not `ts`.
+
+  The epoch in force is written to `/tmp/fw-live/boot.<feed>`, and that file is
+  load bearing rather than a cache: the spool outlives a parser, since the feed
+  loop starts a new one whenever its reader dies, and a parser that went back
+  to the startup guess would restamp a buffer that was already correct.
 - **`\]` inside a bracket expression in the ucode backend**, which made every
   logging checkbox fail with "Nothing valid to change." ucode's lexer drops the
   backslash before a `]` in a bracket expression (`parse_escape` retains only
