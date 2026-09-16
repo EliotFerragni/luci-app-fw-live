@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.7
+# luci-app-fw-live 1.0.8
 
 A live view of what your firewall is accepting and refusing, for OpenWrt.
 Connections appear as they happen, under **Status → Firewall Live**.
@@ -58,13 +58,13 @@ architecture independent, so the same file works on any target.
 
 OpenWrt 25.12 and newer:
 
-    scp luci-app-fw-live-1.0.7-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.7-r1.apk'
+    scp luci-app-fw-live-1.0.8-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.8-r1.apk'
 
 OpenWrt 24.10 and older:
 
-    scp luci-app-fw-live_1.0.7-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.7-1_all.ipk'
+    scp luci-app-fw-live_1.0.8-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.8-1_all.ipk'
 
 **Without a package manager**, copy the source tree to the router and run
 `install.sh` on it. `install.sh --remove` undoes it.
@@ -135,8 +135,13 @@ Two things follow that are worth knowing:
   classifies produces Unknown rows duplicating a row you already have. Set
   `ignore_unknown` to stop capturing those, or untick **Unknown** in the
   verdict filter to hide them in the browser only.
-- A rule can log traffic it has no intention of refusing. If its rows include
-  destinations the rule does not cover, its logging is costing you volume and
+- A rule can log traffic it has no intention of refusing. fw4 turns a rule's
+  destination zone into a jump rather than a match, so a rule allowing guest to
+  lan matches only the source, logs, and then checks the destination. Traffic
+  from that source to anywhere else is logged by the rule and refused further
+  down by the zone, giving a row that names both, `Allow-Guest-Device > reject
+  guest forward`. See [Reading the page](#reading-the-page). If a rule's rows
+  include destinations it does not cover, its logging is costing you volume and
   telling you nothing.
 
 [DEVELOPMENT.md](DEVELOPMENT.md) explains how the two feeds are joined, if the
@@ -152,7 +157,20 @@ reasoning behind a particular row matters to you.
 | Protocol | TCP, UDP, ICMP or the protocol number, plus flags or type/code |
 | Source | host name over address, resolved in your browser |
 | Destination | the same, for the far end |
-| Rule | the firewall log prefix. Empty for most accepted connections |
+| Rule | which rules logged the packet, in the order it met them. Empty for most accepted connections |
+
+A Rule cell can hold more than one name, separated by `>`. Those are the rules
+that logged the packet as it travelled through the ruleset, and they are not
+all claims about the verdict. A rule logged through `option log` writes only
+its own name, never an outcome; the prefixes fw4 generates itself, like
+`reject guest forward`, do state one. So a row reading
+`Allow-Guest-Device > reject guest forward` means that rule saw the packet and
+the guest zone policy is what refused it.
+
+That is worth knowing because a rule sees more traffic than it decides. fw4
+turns a rule's destination zone into a jump rather than a match, so a rule
+allowing guest to lan is logging every packet from that source whatever its
+destination, and only then checking where it was going.
 
 The interfaces under Direction are written `bridge/port`, so `br-lan/wlan0`
 means the packet arrived on the `br-lan` bridge from the `wlan0` radio. That is

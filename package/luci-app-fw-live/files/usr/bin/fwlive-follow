@@ -183,6 +183,12 @@ function direction(sa, da, fam,   ls, ld) {
 	return "-"
 }
 
+# fw4 renders the zone forward policy as "<verdict> <zone> forward: " at the
+# tail of forward_<zone>, and writes that prefix in no other chain.
+function zone_policy(p) {
+	return (p ~ /^(accept|reject|drop) [^ ]+ forward$/)
+}
+
 # Add the step to every event already spooled. They happened when they
 # happened; it is the clock that was wrong, so the stamps written under it are
 # wrong by exactly the same amount and are recoverable. Rewritten and renamed
@@ -498,6 +504,18 @@ mode == "log" {
 	if (merge_rules && pend_valid && nkey == pend_key && pend_rule != "") {
 		# The verdict from this line, the rule name from the held one.
 		nrule = pend_rule
+		# Unless this line is the zone forward policy, which fw4 writes at the
+		# tail of forward_<zone> and nowhere else. Reaching it means the packet
+		# fell off the end of the chain, so every rule that logged it earlier
+		# let it through: a rule whose dest zone became a jump target sees
+		# every packet from its source, logs it, and falls through when the
+		# jump does not match. Naming that rule alone as the reason would say
+		# the opposite of what happened, so the policy goes on the end of the
+		# path instead. The same is not true of "<verdict> <zone> in: " and
+		# "out: ", which are written by reject_from_ and reject_to_ chains
+		# that a named rule can itself jump into.
+		if (zone_policy(lp) && length(nrule) + length(pfx) + 3 <= 96)
+			nrule = nrule " > " pfx
 		pend_valid = 0
 		merged++
 	}

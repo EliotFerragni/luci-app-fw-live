@@ -36,7 +36,8 @@ Its addresses have been rewritten, as every real capture here has; see
 **`synthetic`** is written by hand. It exists because one capture window is
 not a specification: the router capture contains no IPv6 at all, no ICMP in
 the log, no ICMP error quoting the offending header, no bare protocol number
-and no per-rule prefix carrying a rule's own name. Every line in it is in the
+and no per-rule prefix carrying a rule's own name, and no rule logging a packet
+that then fell through to the zone forward policy. Every line in it is in the
 format the router capture confirmed, and it covers the cases that one happened
 to miss. Do not delete it when a richer real capture arrives; add a case.
 

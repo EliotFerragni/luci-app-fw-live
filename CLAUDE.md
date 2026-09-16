@@ -139,8 +139,8 @@ in `tests/fixtures/` as the `router` case and `phase0.txt`.
   rather than its own name, so `reject wan out` does not tell you whether the
   zone policy or a named rule refused the packet; and the same packet appears
   twice, once as `unknown` with the rule name and once as `reject` without it.
-  The first two are the cost of per rule logging and cannot be avoided. The
-  third is what `merge_rules` fixes: the parser holds an event whose prefix
+  The first two are mostly the cost of per rule logging, with one exception
+  below. The third is what `merge_rules` fixes: the parser holds an event whose prefix
   carries no verdict, and if the next line is the same packet, by family,
   protocol, addresses, ports and IP `ID=`, the two become one row with the
   verdict from the second and the rule name from the first.
@@ -149,6 +149,28 @@ in `tests/fixtures/` as the `router` case and `phase0.txt`.
   them a verdict, so consecutive verdictless lines for the same packet chain
   into one row whose rule column is the path taken, `A > B`, capped at 96
   characters because nothing bounds how many rules can log.
+
+  **The zone forward policy is the one case where the held name must not be
+  credited with the verdict.** The jump target structure above applies to
+  `accept` just as it does to `reject`: a rule accepting guest to lan renders
+  as a match on the source, a log, and `jump accept_to_lan`, whose own rule
+  matches `oifname "br-lan"`. A packet from that source to a different zone
+  matches the rule, is logged under its name, falls through the jump, returns,
+  and runs off the end of `forward_guest` into the zone policy. Taking the
+  verdict from the second line and the name from the first then reports that
+  the rule refused a packet it was written to allow, which is what prompted
+  this: the user saw `Allow-Guest-Device` on a rejection and reasonably read it
+  as the rule rejecting.
+
+  That case is distinguishable, and only that one. fw4 writes
+  `<verdict> <zone> forward: ` at the tail of `forward_<zone>` and in no other
+  chain, so reaching it means the packet fell off the end and every rule that
+  logged it earlier let it through. The row becomes
+  `Allow-Guest-Device > reject guest forward`, the same path notation as above.
+  `<verdict> <zone> in: ` and `out: ` are written by `reject_from_<zone>` and
+  `reject_to_<zone>`, which are jump targets a named rule can itself jump into,
+  so there the held name is the cause and keeps the row: that is the
+  `Block-Internet` / `reject wan out` case and it must not change.
 
   **The match key includes the interfaces, and has to.** A broadcast flooded
   to four bridge ports is four log lines sharing an IP ID and a five tuple,

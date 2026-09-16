@@ -317,6 +317,23 @@ check "each naming only the single rule that logged it" \
 check "and still distinguishable by the port they went out of" \
 	"$(awk -F'\t' '$9 == "239.255.255.250" { print $12 }' "$FIX/expected-chained-log.tsv" | sort -u | wc -l | tr -d ' ')" "4"
 
+# fw4 writes "<verdict> <zone> forward: " at the tail of forward_<zone> and
+# nowhere else, so a packet that reached it fell off the end of the chain and
+# every rule that logged it earlier let it through. A rule whose dest zone
+# became a jump target sees every packet from its source, logs it, and falls
+# through when the jump does not match, so crediting it with the refusal says
+# the opposite of what happened.
+check "a rule that let a packet fall through to the zone policy does not own the refusal" \
+	"$(awk -F'\t' '$8 == "52118" { print $14 }' "$FIX/expected-synthetic-log.tsv")" \
+	"Allow-Guest-Device > reject guest forward"
+check "which is still one row, and still a reject" \
+	"$(awk -F'\t' '$8 == "52118" { print $4 }' "$FIX/expected-synthetic-log.tsv" | wc -l | tr -d ' ')" "1"
+# The contrast, from the router capture: reject_to_wan is a jump target, so a
+# rule that jumped into it did decide the packet and keeps the row to itself.
+check "a rule that jumped into the chain that refused the packet keeps the row" \
+	"$(awk -F'\t' '$8 == "46446" { print $14 }' "$FIX/expected-namedrule-log.tsv")" \
+	"Block-Internet"
+
 check "a prefix that does say drop is still a drop" \
 	"$(awk -F'\t' '$14 == "drop wan invalid ct state" { print $4 }' "$FIX/expected-synthetic-log.tsv")" \
 	"drop"
