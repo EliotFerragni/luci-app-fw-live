@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.9
+# luci-app-fw-live 1.0.10
 
 A live view of what your firewall is accepting and refusing, for OpenWrt.
 Connections appear as they happen, under **Status → Firewall Live**.
@@ -9,9 +9,10 @@ flow offloading is untouched.
 
 ![Everything the firewall is doing, newest first](docs/live-overview.png)
 
-Click any address, port, protocol, direction or rule to filter on it. **Pause**
-freezes the tail without losing anything; resuming delivers what arrived in the
-meantime.
+Click any address, port, protocol, direction or rule to filter on it, or
+alt-click to leave it out. Filters add up, so a device and a rule together show
+only where the two meet: see [Filtering](#filtering). **Pause** freezes the
+tail without losing anything; resuming delivers what arrived in the meantime.
 
 ![The same page filtered down to what was refused](docs/live-denied.png)
 
@@ -58,13 +59,13 @@ architecture independent, so the same file works on any target.
 
 OpenWrt 25.12 and newer:
 
-    scp luci-app-fw-live-1.0.9-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.9-r1.apk'
+    scp luci-app-fw-live-1.0.10-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.10-r1.apk'
 
 OpenWrt 24.10 and older:
 
-    scp luci-app-fw-live_1.0.9-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.9-1_all.ipk'
+    scp luci-app-fw-live_1.0.10-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.10-1_all.ipk'
 
 **Without a package manager**, copy the source tree to the router and run
 `install.sh` on it. `install.sh --remove` undoes it.
@@ -263,6 +264,34 @@ scanner on the same subnet as your wan address reads as Local.
 
 The summary line counts the whole buffer rather than the page, so it stays
 meaningful while a filter is on.
+
+### Filtering
+
+Click any value in the table to filter on it, or alt-click to filter it out.
+Each click adds a term, and clicking the same value again takes it back out.
+
+![Two terms at once, one of them an exclusion](docs/live-filter.png)
+
+The terms in force appear as chips under the bar. Clicking a chip flips it
+between **only this** and **everything but this**; the × drops it. The box they
+came from takes the same thing typed by hand:
+
+| typed | means |
+| --- | --- |
+| `192.168.1.31` | rows mentioning that anywhere |
+| `192.168.1.31 Block-Internet` | both have to match |
+| `-192.168.1.31` | rows not mentioning it |
+| `192.168.1.31,192.168.1.44` | either one counts |
+| `"reject wan out"` | one term with a space in it |
+
+A term is matched as a case insensitive substring against the addresses, the
+ports, the interfaces, the rule and the protocol flags, so a bare port number
+finds both ends of it and `wlan0` finds one bridge port. Quotes are what keep a
+rule name or a zone prefix in one piece, and the page adds them for you when
+you click one.
+
+The verdict chips, the direction and the protocol are separate controls, and
+everything you set narrows together. **clear filters** puts all of it back.
 
 ## Configuration
 

@@ -70,6 +70,55 @@ function pollInterval() {
 	return v;
 }
 
+// The search box is a small query language, the same one fwlive-query parses:
+// terms separated by spaces all have to match, a minus in front of a term
+// excludes it, a comma inside one means any of, and quotes hold a term that
+// has a space in it. Everything here is about the string the router is handed,
+// so the two parsers have to agree.
+//
+// Only a minus at the head of a term negates, or Block-Internet would read as
+// a negated Internet.
+function parseTerms(str) {
+	const out = [];
+	let cur = '', inq = false, neg = false, seen = false;
+	for (let i = 0; i < str.length; i++) {
+		const c = str.charAt(i);
+		if (c === '"') { inq = !inq; seen = true; continue; }
+		if (c === ' ' && !inq) {
+			if (seen && cur) out.push({ text: cur, neg: neg });
+			cur = ''; neg = false; seen = false;
+			continue;
+		}
+		if (!seen && c === '-') { neg = true; seen = true; continue; }
+		cur += c;
+		seen = true;
+	}
+	if (seen && cur) out.push({ text: cur, neg: neg });
+	return out;
+}
+
+// What the backend keeps, so a value taken off a row is turned into the term
+// that will actually reach the buffer rather than one the sanitiser will bend
+// on the way. A quote cannot survive as part of a term, since that is what
+// delimits one.
+function cleanTerm(v) {
+	return String(v == null ? '' : v)
+		.replace(/"/g, '')
+		.replace(/[^0-9A-Za-z.:_/ ,>-]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
+function termText(t) {
+	const quoted = (t.text.indexOf(' ') >= 0 || t.text.charAt(0) === '-')
+		? '"' + t.text + '"' : t.text;
+	return (t.neg ? '-' : '') + quoted;
+}
+
+function termsToString(list) {
+	return list.map(termText).join(' ');
+}
+
 // Blocked site data and private windows make localStorage throw rather than
 // come back empty, so every access goes through these two.
 function stored(key) {
@@ -194,6 +243,13 @@ const CSS = '' +
 '.fwl-toggle { cursor:pointer; user-select:none; padding:2px 10px; border-radius:12px;' +
 '  border:1px solid currentColor; font-size:12px; line-height:18px; opacity:0.45 }' +
 '.fwl-toggle.on { opacity:1 }' +
+'.fwl-terms { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px }' +
+'.fwl-term { display:inline-flex; align-items:center; gap:6px; padding:1px 8px; font-size:12px;' +
+'  line-height:18px; border-radius:10px; border:1px solid rgba(120,160,220,0.55);' +
+'  background:rgba(120,160,220,0.14) }' +
+'.fwl-term.neg { border-color:rgba(194,80,79,0.55); background:rgba(194,80,79,0.14) }' +
+'.fwl-term .fwl-x { cursor:pointer; opacity:0.6; font-weight:700 }' +
+'.fwl-term .fwl-x:hover { opacity:1 }' +
 '.fwl-paused { background:rgba(217,128,50,0.16) }' +
 '.fwl-new td, .fwl-new .td { animation:fwl-flash 1.2s ease-out }' +
 '@keyframes fwl-flash { from { background:rgba(120,160,220,0.28) } to { background:transparent } }' +
@@ -240,7 +296,10 @@ return view.extend({
 			type: 'text',
 			'class': 'cbi-input-text',
 			placeholder: _('address, port or rule'),
-			style: 'min-width:200px',
+			title: _('Terms are separated by spaces and all have to match. A minus in front ' +
+			         'of one excludes it, a comma inside one means any of, and quotes hold a ' +
+			         'term that has a space in it.'),
+			style: 'min-width:240px',
 			value: state.search
 		});
 
@@ -278,6 +337,11 @@ return view.extend({
 			click: function(ev) { ev.preventDefault(); clearFilters(); }
 		}, _('clear filters'));
 
+		// What the search box holds, one chip per term, so the minus in front
+		// of an excluded term is something to click rather than something to
+		// know about.
+		const termBox = E('div', { 'class': 'fwl-terms' });
+
 		function rowCount() {
 			return tableNode.childNodes.length - 1;
 		}
@@ -287,27 +351,31 @@ return view.extend({
 				tableNode.removeChild(tableNode.lastChild);
 		}
 
+		// The handler is given the event because alt-click is the shortcut for
+		// the opposite filter, everything but this value.
 		function link(text, title, fn) {
 			return E('a', {
 				href: '#',
 				title: title,
-				click: function(ev) { ev.preventDefault(); fn(); }
+				click: function(ev) { ev.preventDefault(); fn(ev); }
 			}, text);
 		}
 
+		const FILTER_HINT = _('Click to add this to the filter, alt-click for everything but it');
+
 		function endpoint(addr, port) {
 			const name = hostname(addr);
-			const line = E('div', {}, [ link(addr, _('Filter on this address'),
-				function() { setSearch(addr); }) ]);
+			const line = E('div', {}, [ link(addr, FILTER_HINT,
+				function(ev) { toggleTerm(addr, ev); }) ]);
 			if (port && port !== '-') {
 				line.appendChild(document.createTextNode(':'));
-				line.appendChild(link(port, _('Filter on this port'),
-					function() { setSearch(port); }));
+				line.appendChild(link(port, FILTER_HINT,
+					function(ev) { toggleTerm(port, ev); }));
 			}
 			if (!name)
 				return line;
 			return E('div', {}, [
-				E('div', {}, link(name, _('Filter on this host'), function() { setSearch(addr); })),
+				E('div', {}, link(name, FILTER_HINT, function(ev) { toggleTerm(addr, ev); })),
 				E('div', { 'class': 'fwl-sub' }, line)
 			]);
 		}
@@ -347,7 +415,7 @@ return view.extend({
 				E('td', { 'class': 'td' }, endpoint(e.saddr, e.sport)),
 				E('td', { 'class': 'td' }, endpoint(e.daddr, e.dport)),
 				E('td', { 'class': 'td' }, rule
-					? link(rule, _('Filter on this rule'), function() { setSearch(rule); })
+					? link(rule, FILTER_HINT, function(ev) { toggleTerm(rule, ev); })
 					: E('span', { style: 'opacity:0.45' }, '\u00b7'))
 			]);
 		}
@@ -359,6 +427,27 @@ return view.extend({
 				tableNode.insertBefore(buildRow(events[i], fresh), tableNode.childNodes[1] || null);
 			while (rowCount() > MAX_ROWS)
 				tableNode.removeChild(tableNode.lastChild);
+		}
+
+		function renderTerms() {
+			const list = parseTerms(state.search);
+			termBox.innerHTML = '';
+			termBox.style.display = list.length ? '' : 'none';
+			list.forEach(function(t, i) {
+				termBox.appendChild(E('span', { 'class': 'fwl-term' + (t.neg ? ' neg' : '') }, [
+					E('span', {
+						style: 'cursor:pointer',
+						title: t.neg ? _('Everything but this. Click for only this.')
+						             : _('Only rows with this. Click for everything but it.'),
+						click: function() { flipTerm(i); }
+					}, (t.neg ? '\u2212 ' : '') + t.text),
+					E('span', {
+						'class': 'fwl-x',
+						title: _('Remove this term'),
+						click: function() { dropTerm(i); }
+					}, '\u00d7')
+				]));
+			});
 		}
 
 		function syncControls() {
@@ -373,6 +462,7 @@ return view.extend({
 			protoSel.value = state.proto;
 			if (searchInput.value !== state.search)
 				searchInput.value = state.search;
+			renderTerms();
 			pauseBtn.textContent = state.paused ? _('Resume') : _('Pause');
 			pauseBtn.className = 'cbi-button' + (state.paused ? ' cbi-button-negative' : ' cbi-button-action');
 			clearLink.style.display = filtersActive() ? '' : 'none';
@@ -492,9 +582,41 @@ return view.extend({
 			refilter();
 		}
 
-		function setSearch(v) {
-			state.search = (state.search === v) ? '' : v;
+		function setTerms(list) {
+			state.search = termsToString(list);
 			refilter();
+		}
+
+		// Clicking a value that is already filtered on takes it back out, so a
+		// click and a second click on the same cell leave the page where it
+		// started, whichever way round the term was.
+		function toggleTerm(v, ev) {
+			const text = cleanTerm(v);
+			if (!text)
+				return;
+			const list = parseTerms(state.search);
+			for (let i = 0; i < list.length; i++) {
+				if (list[i].text.toLowerCase() === text.toLowerCase()) {
+					list.splice(i, 1);
+					return setTerms(list);
+				}
+			}
+			list.push({ text: text, neg: !!(ev && ev.altKey) });
+			return setTerms(list);
+		}
+
+		function flipTerm(i) {
+			const list = parseTerms(state.search);
+			if (!list[i])
+				return;
+			list[i].neg = !list[i].neg;
+			setTerms(list);
+		}
+
+		function dropTerm(i) {
+			const list = parseTerms(state.search);
+			list.splice(i, 1);
+			setTerms(list);
 		}
 
 		function clearFilters() {
@@ -552,13 +674,16 @@ return view.extend({
 					searchInput,
 					clearLink
 				]),
+				termBox,
 				E('p', { 'class': 'cbi-section-descr', style: 'margin:8px 0 0' },
 					_('Connections the firewall accepted and packets it refused, as they happen. ' +
-					  'Click any address, port, protocol, direction or rule to filter on it. ' +
-					  'Accepted connections normally have no rule name: they come from the conntrack ' +
-					  'event stream, which does not know which rule let them through. A row marked ' +
-					  'Unknown matched a rule that logs under its own name, which says nothing about ' +
-					  'what happened to the packet.')),
+					  'Click any address, port, protocol, direction or rule to filter on it, or ' +
+					  'alt-click for everything but it. Terms add up, so a device and a rule ' +
+					  'together show where the two meet; click a term to flip it between only ' +
+					  'and except. Accepted connections normally have no rule name: they come ' +
+					  'from the conntrack event stream, which does not know which rule let them ' +
+					  'through. A row marked Unknown matched a rule that logs under its own ' +
+					  'name, which says nothing about what happened to the packet.')),
 				summaryNode,
 				statusNode,
 				errorNode

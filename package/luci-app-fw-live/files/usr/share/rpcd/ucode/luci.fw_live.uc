@@ -40,7 +40,13 @@ function events(req) {
 	let verdict = replace('' + (args.verdict || ''), /[^a-z,]/g, '');
 	let proto = lc(replace('' + (args.proto || ''), /[^0-9A-Za-z]/g, ''));
 	let dir = lc(replace('' + (args.dir || ''), /[^A-Za-z]/g, ''));
-	let search = replace('' + (args.search || ''), /[^0-9A-Za-z.:_\/ -]/g, '');
+	// The three added characters are the search box's own query language: a
+	// quote groups a term with a space in it, a comma is any-of, and a > is
+	// there because a merged row's rule column is a path, A > B. The minus
+	// that excludes a term was already in the set. None of them mean anything
+	// to the shell inside the single quotes below, and the one that would,
+	// the apostrophe, is not in the set.
+	let search = replace('' + (args.search || ''), /[^0-9A-Za-z.:_\/ ",>-]/g, '');
 
 	if (length(verdict) > 32)
 		verdict = '';
@@ -48,8 +54,8 @@ function events(req) {
 		proto = '';
 	if (length(dir) > 8)
 		dir = '';
-	if (length(search) > 64)
-		search = substr(search, 0, 64);
+	if (length(search) > 160)
+		search = substr(search, 0, 160);
 
 	let out = run(`${QUERY} ${limit} ${after_log} ${after_ct} '${verdict}' '${proto}' '${dir}' '${search}' 2>/dev/null`);
 	let data = null;

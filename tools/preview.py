@@ -789,10 +789,16 @@ def main():
             shutil.rmtree(work, ignore_errors=True)
         return
 
+    # the third one is the query language: two terms, one of them an exclusion,
+    # so the chips under the bar are in the image the README points at
+    TERMS = '"drop wan in" -192.0.2.44'
     shots = [
         ("overview", [200, 0, 0, "", "", "", ""], {}),
         ("denied", [200, 0, 0, "drop,reject", "", "", ""],
          dict(filters={"verdict": ["drop", "reject"], "dir": "", "proto": "", "search": ""})),
+        ("filter", [200, 0, 0, "", "", "", TERMS],
+         dict(filters={"verdict": ["accept", "drop", "reject", "unknown"],
+                       "dir": "", "proto": "", "search": TERMS})),
     ]
     DOCS.mkdir(exist_ok=True)
     if args.dark:

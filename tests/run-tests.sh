@@ -21,6 +21,7 @@
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 BIN=$ROOT/package/luci-app-fw-live/files/usr/bin
 FIX=$ROOT/tests/fixtures
+VIEWS=$ROOT/package/luci-app-fw-live/files/www/luci-static/resources/view/fw-live
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
@@ -729,7 +730,14 @@ gen() {
 		for (i = 1; i <= n; i++) {
 			ts = base + int((i - 1) / rate)
 			if (src == "ct") { v = "accept"; rule = "-"; iif = "-" }
-			else { v = (i % 2) ? "reject" : "drop"; rule = v " wan in"; iif = "eth1" }
+			else {
+				v = (i % 2) ? "reject" : "drop"
+				# Every third one is named by the rule rather than by the zone,
+				# so the buffer holds both a rule name with a dash in it and a
+				# prefix with spaces in it, which the search terms need.
+				rule = (i % 3) ? v " wan in" : "Block-Telnet-Out"
+				iif = "eth1"
+			}
 			print ts, i, src, v, 4, P[1 + (i % 3)], \
 			      "10.0.0." ((i % 250) + 1), 1024 + i, \
 			      "203.0.113." ((i % 200) + 1), (i % 1000) + 1, \
@@ -801,6 +809,53 @@ check "direction filter" "$(jnum "$WORK/out.json" matched)" "$N_IN"
 query 1000 0 0 "" "" "" "10.0.0.42"
 check "search filter" "$(jnum "$WORK/out.json" matched)" "$N_SEARCH"
 
+# The search box is a query language, and every one of these is a shape the
+# view can put into it by itself: a click adds a term, alt-click adds a
+# negated one, and anything with a space in it is quoted on the way in.
+N_TERM2=$(tot '$7 == "10.0.0.42" && $14 ~ /reject/')
+query 1000 0 0 "" "" "" "10.0.0.42 reject"
+check "two terms both have to match" "$(jnum "$WORK/out.json" matched)" "$N_TERM2"
+
+N_NOT=$(tot '$7 != "10.0.0.42"')
+query 1000 0 0 "" "" "" "-10.0.0.42"
+check "a term with a minus in front excludes it" \
+	"$(jnum "$WORK/out.json" matched)" "$N_NOT"
+
+N_MIX=$(tot '$14 ~ /reject/ && $7 != "10.0.0.42"')
+query 1000 0 0 "" "" "" "reject -10.0.0.42"
+check "an exclusion narrows what the other terms matched" \
+	"$(jnum "$WORK/out.json" matched)" "$N_MIX"
+
+N_EITHER=$(tot '$7 == "10.0.0.42" || $7 == "10.0.0.43"')
+query 1000 0 0 "" "" "" "10.0.0.42,10.0.0.43"
+check "a comma inside a term means either of them" \
+	"$(jnum "$WORK/out.json" matched)" "$N_EITHER"
+
+# Both halves of quoting: a phrase matches only where it appears whole, and
+# the same words unquoted are separate terms that can match anywhere.
+N_PHRASE=$(tot '$14 == "reject wan in"')
+query 1000 0 0 "" "" "" '"reject wan in"'
+check "a quoted term keeps its space" "$(jnum "$WORK/out.json" matched)" "$N_PHRASE"
+
+query 1000 0 0 "" "" "" '"wan in reject"'
+check "and matches nothing when the words are in the wrong order" \
+	"$(jnum "$WORK/out.json" matched)" "0"
+
+query 1000 0 0 "" "" "" "wan in reject"
+check "the same words unquoted are separate terms" \
+	"$(jnum "$WORK/out.json" matched)" "$N_PHRASE"
+
+# A minus is only an exclusion at the head of a term, or no rule name with a
+# dash in it could ever be filtered on.
+N_DASH=$(tot '$14 == "Block-Telnet-Out"')
+query 1000 0 0 "" "" "" "block-telnet-out"
+check "a dash inside a term is part of it, not an exclusion" \
+	"$(jnum "$WORK/out.json" matched)" "$N_DASH"
+
+query 1000 0 0 "" "" "" "  -  ,, \"\" "
+check "terms that are empty once parsed filter nothing out" \
+	"$(jnum "$WORK/out.json" matched)" "$N_ALL"
+
 query 1000 0 0 "" "udp" "in" "10.0.0.42"
 COMBO=$(tot '$6 == "udp" && $13 == "in" && $7 == "10.0.0.42"')
 check "filters combine" "$(jnum "$WORK/out.json" matched)" "$COMBO"
@@ -821,6 +876,39 @@ check "the limit is clamped to 1000" "$(nevents "$WORK/out.json")" "1000"
 
 query 0 0 0 "" "" "" ""
 check "a zero limit falls back to the default" "$(nevents "$WORK/out.json")" "200"
+
+# The view builds the term string and the query parses it, in two languages,
+# so the one thing worth checking is that they still agree. The view's own
+# helpers do the building here rather than a copy of them written out.
+if command -v node >/dev/null 2>&1; then
+	sed -n '/^function parseTerms/,/^}/p; /^function cleanTerm/,/^}/p;
+	        /^function termText/,/^}/p; /^function termsToString/,/^}/p' \
+		"$VIEWS/main.js" > "$WORK/terms.js"
+	cat >> "$WORK/terms.js" <<'EOJS'
+var built = termsToString([
+	{ text: cleanTerm('reject wan in'), neg: false },
+	{ text: cleanTerm('10.0.0.42'), neg: true }
+]);
+console.log(built);
+console.log(parseTerms(built).map(function (t) {
+	return (t.neg ? '-' : '+') + t.text;
+}).join('|'));
+EOJS
+	node "$WORK/terms.js" > "$WORK/terms.out"
+	BUILT=$(sed -n 1p "$WORK/terms.out")
+	check "the view quotes a term that has a space in it" \
+		"$BUILT" '"reject wan in" -10.0.0.42'
+	check "and reads its own string back unchanged" \
+		"$(sed -n 2p "$WORK/terms.out")" '+reject wan in|-10.0.0.42'
+	query 1000 0 0 "" "" "" "$BUILT"
+	N_VIEW=$(tot '$14 == "reject wan in" && $7 != "10.0.0.42"')
+	check "and the query reads it the same way" \
+		"$(jnum "$WORK/out.json" matched)" "$N_VIEW"
+else
+	skip "the view and the query agree on a term string (needs node)"
+	skip "the view reads its own term string back (needs node)"
+	skip "the query reads the view's term string the same way (needs node)"
+fi
 
 query 200 0 0 "; rm -rf /" "'; id #" "\$(id)" "\`id\`"
 check "shell metacharacters in the filters are stripped, not executed" \

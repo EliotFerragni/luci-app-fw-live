@@ -301,6 +301,21 @@ from the front, so the newest N matching lines are the last N to arrive. The
 query keeps a ring per source and merges the two. Busybox awk has no `asort`
 and an insertion sort over a full buffer would be far too slow.
 
+**The search box is a query language, and it is parsed twice.** Terms
+separated by spaces all have to match, a minus in front of one excludes it, a
+comma inside one means any of, and quotes hold a term with a space in it, which
+every fw4 zone prefix and every merged rule path has. `main.js` parses it to
+draw the chips and to add or remove a term on a click; `fwlive-query` parses it
+to filter. The two have to agree, so `tests/run-tests.sh` builds a term string
+with the view's own helpers and feeds that exact string to the query rather
+than testing each side against a copy of the other. The allowed character set
+is written out in three places, the view's `cleanTerm`, the ucode sanitiser and
+`fwlive-query`'s `sed`, and `>` is in it because a merged row's rule column is
+a path, `A > B`, and clicking it has to be able to ask for that string, which
+it could not before. None of the three added characters mean anything to the
+shell inside the single quotes the ucode backend wraps them in, and the one
+that would, `'`, is not in the set.
+
 **ubus message size.** Everything the backend returns crosses ubus. The page
 sends the two cursors it holds, so a 2 second poll carries a handful of rows
 rather than the whole page again. The limit is capped at 1000 events.
