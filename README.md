@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.10
+# luci-app-fw-live 1.0.0
 
 A live view of what your firewall is accepting and refusing, for OpenWrt.
 Connections appear as they happen, under **Status → Firewall Live**.
@@ -67,13 +67,13 @@ refuses it for being unsigned, use ssh instead.
 
 **Over ssh.** Copy the file to the router, then install it. On 25.12 and newer:
 
-    scp luci-app-fw-live-1.0.10-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.10-r1.apk'
+    scp luci-app-fw-live-1.0.0-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.0-r1.apk'
 
 On 24.10 and older:
 
-    scp luci-app-fw-live_1.0.10-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.10-1_all.ipk'
+    scp luci-app-fw-live_1.0.0-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.0-1_all.ipk'
 
 **From the source tree.** If you would rather not use a package at all, copy
 the tree to the router and run `install.sh` on it. This route installs no
