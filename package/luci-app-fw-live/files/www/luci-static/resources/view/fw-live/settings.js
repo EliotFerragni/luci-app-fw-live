@@ -274,20 +274,24 @@ return view.extend({
 		o.rmempty = false;
 
 		o = s.option(form.Flag, 'merge_rules', _('Join a rule to its verdict'),
-			_('A packet can be logged twice: once by the rule it matched, whose prefix is only ' +
-			  'a name, and again by the chain that refused it, whose prefix carries the verdict. ' +
-			  'Neither line alone says both things. With this on the two become one row, with ' +
-			  'the rule name and the real verdict, and you get one row rather than two.'));
+			_('One packet is often logged twice: once by the rule it matched, whose prefix is ' +
+			  'only a name (Block-Internet), and once by the chain that refused it, whose ' +
+			  'prefix carries the verdict but no name (reject wan out). Off, that is two rows, ' +
+			  'one Unknown with the name and one Rejected without it. On, it is one row: ' +
+			  'Rejected, Block-Internet. Several rules logging one packet become the path it ' +
+			  'took, Block-Internet > Block-DNS2.'));
 		o.default = '1';
 		o.rmempty = false;
 
 		o = s.option(form.Flag, 'ignore_unknown', _('Ignore rules that do not state a verdict'),
-			_('A rule logged with option log writes only its own name to the log, which says ' +
-			  'nothing about what became of the packet, so those events show as Unknown. ' +
-			  'Turn this on when the rule that logs is not the rule that decides, such as a ' +
-			  'MARK rule used for policy routing: its events are then duplicates of rows you ' +
-			  'already have. Leave it off if a rule both logs and refuses traffic, because ' +
-			  'its events are the only record of that traffic.'));
+			_('A rule logged with option log writes only its own name, so an event that could ' +
+			  'not be joined to a verdict shows as Unknown. On, those are dropped as they ' +
+			  'are captured; rows already joined to a verdict are kept. It costs the rule ' +
+			  'name on accepted traffic, which is only recognised as accepted after capture, ' +
+			  'so those rows come back with an empty Rule column. Worth turning on for a ' +
+			  'rule that logs far more than it decides, a MARK rule for policy routing say. ' +
+			  'To hide Unknown rows without losing them, untick Unknown in the verdict ' +
+			  'filter on the live page.'));
 		o.default = '0';
 		o.rmempty = false;
 

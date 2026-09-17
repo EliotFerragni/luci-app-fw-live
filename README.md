@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.8
+# luci-app-fw-live 1.0.9
 
 A live view of what your firewall is accepting and refusing, for OpenWrt.
 Connections appear as they happen, under **Status → Firewall Live**.
@@ -58,13 +58,13 @@ architecture independent, so the same file works on any target.
 
 OpenWrt 25.12 and newer:
 
-    scp luci-app-fw-live-1.0.8-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.8-r1.apk'
+    scp luci-app-fw-live-1.0.9-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.9-r1.apk'
 
 OpenWrt 24.10 and older:
 
-    scp luci-app-fw-live_1.0.8-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.8-1_all.ipk'
+    scp luci-app-fw-live_1.0.9-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.9-1_all.ipk'
 
 **Without a package manager**, copy the source tree to the router and run
 `install.sh` on it. `install.sh --remove` undoes it.
@@ -129,20 +129,104 @@ carrying the verdict are matched up, and where the log never states a verdict
 the conntrack feed settles it. What cannot be settled either way shows as
 **Unknown** rather than being guessed at.
 
-Two things follow that are worth knowing:
+One thing follows that is worth knowing straight away: **a rule can log
+traffic it has no intention of refusing.** fw4 turns a rule's destination zone
+into a jump rather than a match, so a rule allowing guest to lan matches only
+the source, logs, and then checks the destination. Traffic from that source to
+anywhere else is logged by the rule and refused further down by the zone. If a
+rule's rows include destinations it does not cover, its logging is costing you
+volume and telling you nothing.
 
-- A rule that logs is not always the rule that decides. One that only marks or
-  classifies produces Unknown rows duplicating a row you already have. Set
-  `ignore_unknown` to stop capturing those, or untick **Unknown** in the
-  verdict filter to hide them in the browser only.
-- A rule can log traffic it has no intention of refusing. fw4 turns a rule's
-  destination zone into a jump rather than a match, so a rule allowing guest to
-  lan matches only the source, logs, and then checks the destination. Traffic
-  from that source to anywhere else is logged by the rule and refused further
-  down by the zone, giving a row that names both, `Allow-Guest-Device > reject
-  guest forward`. See [Reading the page](#reading-the-page). If a rule's rows
-  include destinations it does not cover, its logging is costing you volume and
-  telling you nothing.
+Everything else about those rows is decided by the two settings below.
+
+## Rows that carry a name but no verdict
+
+Two settings, both on the **Settings** page, decide what becomes of a log line
+that names a rule without saying what happened to the packet. The defaults are
+right for most people; this section is for when a row is not what you expected.
+
+### `merge_rules`: join a rule's name to its verdict
+
+**On by default.** A packet refused on its way out to the wan is logged twice.
+Trimmed to the fields that matter:
+
+    Block-Internet: IN=br-lan OUT=br-wan SRC=192.168.1.31 DST=198.51.100.111
+        ID=12938 PROTO=TCP SPT=46446 DPT=443
+    reject wan out: IN=br-lan OUT=br-wan SRC=192.168.1.31 DST=198.51.100.111
+        ID=12938 PROTO=TCP SPT=46446 DPT=443
+
+The first line names the rule and says nothing about the outcome. The second
+states the outcome and names no rule. They are the same packet: same `ID=`,
+same addresses, same ports.
+
+**Off**, that is two rows, neither of them the whole story:
+
+    22:46:29  Unknown   Outbound  TCP  192.168.1.31:46446 -> 198.51.100.111:443  Block-Internet
+    22:46:29  Rejected  Outbound  TCP  192.168.1.31:46446 -> 198.51.100.111:443
+
+**On**, it is one row that says both things:
+
+    22:46:29  Rejected  Outbound  TCP  192.168.1.31:46446 -> 198.51.100.111:443  Block-Internet
+
+Two more shapes come out of the same pairing.
+
+**Several rules can log one packet**, each writing its own name and none of
+them a verdict. Those names become the path the packet took:
+
+    Block-Internet: ... SRC=192.168.1.31 DST=192.168.30.20 ID=65334 PROTO=UDP SPT=53578 DPT=53
+    Block-DNS2:     ... SRC=192.168.1.31 DST=192.168.30.20 ID=65334 PROTO=UDP SPT=53578 DPT=53
+
+    09:39:47  Unknown  Local  UDP  192.168.1.31:53578 -> 192.168.30.20:53  Block-Internet > Block-DNS2
+
+Off, that would be two Unknown rows for one packet.
+
+**A zone policy goes on the end of the path rather than onto the rule.** When
+the second line is the zone's own forwarding policy, the rule that logged
+first did not refuse anything: it matched the source, logged, and let the
+packet carry on to the end of the chain.
+
+    Allow-Guest-Device:   ... SRC=192.168.21.58 DST=192.168.1.10 ID=41501 PROTO=TCP SPT=51234 DPT=445
+    reject guest forward: ... SRC=192.168.21.58 DST=192.168.1.10 ID=41501 PROTO=TCP SPT=51234 DPT=445
+
+    09:41:02  Rejected  Local  TCP  192.168.21.58:51234 -> 192.168.1.10:445  Allow-Guest-Device > reject guest forward
+
+Reading that as "Allow-Guest-Device rejected this" would be backwards, which
+is why the row names the policy that actually refused it.
+
+What is deliberately **not** merged: a broadcast flooded to four bridge ports
+is four log lines sharing an `ID=` and differing only in which port they left
+by. Those are four forwarding decisions, so they stay four rows.
+
+### `ignore_unknown`: drop rows that never get a verdict
+
+**Off by default.** Some rules log traffic they do not decide. One that only
+sets a mark for policy routing logs every packet it marks, and nothing in the
+log ever states an outcome for those, so they arrive as Unknown:
+
+    Mark-VPN: IN=br-lan OUT=br-wan SRC=192.168.1.44 DST=198.51.100.20
+        ID=9931 PROTO=TCP SPT=39210 DPT=443
+
+**Off**, that packet was allowed, so its conntrack event turns up too and the
+two are recognised as one connection. You get one row, accepted and named:
+
+    09:44:10  Accepted  Outbound  TCP  192.168.1.44:39210 -> 198.51.100.20:443  Mark-VPN
+
+**On**, the log event is dropped as it is captured, before anything can pair
+it with conntrack. The connection still appears, from the conntrack feed
+alone, with nothing in the Rule column:
+
+    09:44:10  Accepted  Outbound  TCP  192.168.1.44:39210 -> 198.51.100.20:443
+
+So turning it on costs you the very thing per rule logging was for. Two
+things it does not cost you: rows `merge_rules` already joined to a verdict
+are kept, so a rule that both logs and refuses keeps all of its rows; and an
+Unknown row never becomes a wrong answer, since a missing conntrack event is
+never read as a refusal.
+
+Turn it on for a rule that logs far more than it decides and whose name you do
+not need. To hide Unknown rows without losing them, untick **Unknown** in the
+verdict filter on the live page instead: that is a browser side filter, and
+the events stay in the buffer.
 
 [DEVELOPMENT.md](DEVELOPMENT.md) explains how the two feeds are joined, if the
 reasoning behind a particular row matters to you.
@@ -161,16 +245,13 @@ reasoning behind a particular row matters to you.
 
 A Rule cell can hold more than one name, separated by `>`. Those are the rules
 that logged the packet as it travelled through the ruleset, and they are not
-all claims about the verdict. A rule logged through `option log` writes only
-its own name, never an outcome; the prefixes fw4 generates itself, like
-`reject guest forward`, do state one. So a row reading
+all claims about the verdict: a rule logged through `option log` writes only
+its own name, while the prefixes fw4 generates itself, like
+`reject guest forward`, do state an outcome. So a row reading
 `Allow-Guest-Device > reject guest forward` means that rule saw the packet and
-the guest zone policy is what refused it.
-
-That is worth knowing because a rule sees more traffic than it decides. fw4
-turns a rule's destination zone into a jump rather than a match, so a rule
-allowing guest to lan is logging every packet from that source whatever its
-destination, and only then checking where it was going.
+the guest zone policy is what refused it. [Rows that carry a name but no
+verdict](#rows-that-carry-a-name-but-no-verdict) has the log lines behind each
+shape of that column.
 
 The interfaces under Direction are written `bridge/port`, so `br-lan/wlan0`
 means the packet arrived on the `br-lan` bridge from the `wlan0` radio. That is
@@ -202,8 +283,8 @@ The same options live in `/etc/config/fw-live`:
 | `ignore_local` | `0` | drop events with both ends on a local network |
 | `local_network` | every interface | list: uci network interfaces that count as local |
 | `local_subnet` | none | list: extra local prefixes, as `address/length` |
-| `merge_rules` | `1` | fold a rule's log line into the verdict line for the same packet |
-| `ignore_unknown` | `0` | drop log events whose prefix does not state a verdict |
+| `merge_rules` | `1` | fold a rule's log line into the verdict line for the same packet ([examples](#merge_rules-join-a-rules-name-to-its-verdict)) |
+| `ignore_unknown` | `0` | drop log events whose prefix does not state a verdict ([examples](#ignore_unknown-drop-rows-that-never-get-a-verdict)) |
 | `time_format` | `auto` | clock: `auto`, `24` or `12` |
 | `date_format` | `auto` | date order: `auto`, `dmy` or `mdy` |
 

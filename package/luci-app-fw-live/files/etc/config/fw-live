@@ -33,16 +33,18 @@ config fw_live 'main'
 	# named here.
 	#	list local_subnet '192.168.50.0/24'
 	#	list local_subnet 'fd00:abc::/48'
-	# One packet can be logged twice, once by the rule it matched and again by
-	# the chain that refused it. Fold those two lines into one row carrying
-	# the rule's name and the real verdict.
+	# One packet is often logged twice: once by the rule it matched, whose
+	# prefix is only a name (Block-Internet), and once by the chain that
+	# refused it, whose prefix carries the verdict and no name (reject wan
+	# out). Fold those into one row with both. Rules that each log the same
+	# packet become the path it took, Block-Internet > Block-DNS2.
 	option merge_rules '1'
-	# Drop log events whose prefix does not say what became of the packet,
-	# which is every rule logged through option log. Worth turning on when the
-	# rule that logs is not the rule that decides, such as a MARK rule used
-	# for policy routing: its events are then duplicates of a row you already
-	# have. Leave it off if a rule both logs and refuses, because its events
-	# are the only record of that traffic.
+	# Drop log events that are still unknown after the above, which is a rule
+	# logged through option log whose packet no other line accounted for. What
+	# it costs: an allowed connection is only recognised later, when the log
+	# event meets its conntrack event, so dropping it here leaves accepted
+	# traffic with an empty rule column. Worth turning on for a rule that logs
+	# far more than it decides, a MARK rule for policy routing say.
 	option ignore_unknown '0'
 	# Display only. auto follows the browser's locale; 24 or 12 force the
 	# clock, dmy prints 31/12 and mdy prints 12/31.
