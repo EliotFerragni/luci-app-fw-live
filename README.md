@@ -1,5 +1,8 @@
 # luci-app-fw-live 1.0.0
 
+[![build](https://github.com/EliotFerragni/luci-app-fw-live/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/EliotFerragni/luci-app-fw-live/actions/workflows/build.yml)
+![Claude Code](https://img.shields.io/badge/Claude%20Code-%23D97757.svg?style=for-the-badge&logo=claudecode&logoColor=white)
+
 A live view of what your firewall is accepting and refusing, for OpenWrt.
 Connections appear as they happen, under **Status → Firewall Live**.
 
@@ -392,15 +395,13 @@ feed is not working it prints the commands to fix it. If that is not enough:
 
 Working on it rather than running it? See [DEVELOPMENT.md](DEVELOPMENT.md).
 
-## How this was written
+Before installing a package from a stranger on a router you care about, read
+the scripts. They are deliberately short, and they are listed above.
 
-Claude, Anthropic's coding agent, wrote this package: the capture service, the
-parser, the ucode backend, the LuCI views, the build scripts and this README.
-The maintainer set the direction and reviewed the result, and is the one
-running it on the target hardware. The screenshots are the real page rendered
-against synthetic events rather than grabs from a live router, so the device
-names and addresses in them are invented.
+---
 
-None of that changes what you should do before installing a package from a
-stranger on a router you care about: read the scripts. They are deliberately
-short, and they are listed above.
+This package was written by [Claude Code](https://claude.com/claude-code); see
+[DEVELOPMENT.md](DEVELOPMENT.md#built-with-claude-code).
+
+The screenshots are the real page rendered against synthetic events rather than
+grabs from a live router, so the host names and addresses in them are invented.

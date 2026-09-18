@@ -287,3 +287,18 @@ With zone logging enabled on wan:
 - Leave the page open for an hour on a busy network. `buffered` stays at
   `buffer_size`, `/tmp/fw-live` stays bounded, and the page does not slow down.
 - `fw4 print` before and after installing the package is identical.
+
+## Built with Claude Code
+
+This package was written by [Claude Code](https://claude.com/claude-code)
+across a series of sessions: the capture service, the parser, the ucode
+backend, the LuCI views, the build scripts, the tests and this documentation.
+What to build, which trade-offs to take and what counted as broken came from
+the human side, as did every run on the target hardware. Every commit written by Claude
+carries a `Co-Authored-By: Claude` trailer, so the history says
+which is which.
+
+`CLAUDE.md` is what the agent is handed at the start of a session: the
+constraints that are not visible from the code, the measurements the design
+rests on, and the mistakes already made once. It is worth reading before
+changing anything here, whoever or whatever is doing the changing.
