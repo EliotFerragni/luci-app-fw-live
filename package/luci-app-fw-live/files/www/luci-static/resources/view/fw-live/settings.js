@@ -228,17 +228,24 @@ return view.extend({
 		info('discarded', 'discarded', _('Discarded'));
 		info('merged', 'merge rules', _('Rule names joined to verdicts'));
 		info('prefixes', 'local prefixes', _('Local prefixes'));
+		info('console', 'console log', _('Kernel console'));
 
-		if (st['conntrack fix']) {
-			o = s.option(form.DummyValue, '_ctfix', _('Turn on conntrack events'));
+		// Escaped because the text comes from a script, not from here.
+		function fix(id, key, label) {
+			if (!st[key])
+				return;
+			o = s.option(form.DummyValue, '_' + id, label);
 			o.rawhtml = true;
 			o.cfgvalue = function() {
 				return '<pre style="white-space:pre-wrap">' +
-				       st['conntrack fix'].replace(/[&<>]/g, function(ch) {
+				       st[key].replace(/[&<>]/g, function(ch) {
 					       return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch];
 				       }) + '</pre>';
 			};
 		}
+
+		fix('ctfix', 'conntrack fix', _('Turn on conntrack events'));
+		fix('confix', 'console fix', _('Keep firewall lines off the console'));
 
 		o = s.option(form.Button, '_raw', _('Full diagnostics'));
 		o.inputtitle = _('Show');

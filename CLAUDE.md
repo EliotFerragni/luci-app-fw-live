@@ -578,3 +578,53 @@ Worth not repeating:
   accept the escaped spelling. Write the literal bracket first instead,
   `[]A-Za-z0-9_@[-]`, which means the same thing to Python, glibc and busybox.
   `tests/run-tests.sh` now rejects the escaped spelling in the `.uc` file.
+- **The README saying "logging costs log volume, not CPU."** It is true at the
+  rates a home firewall produces and badly wrong past them, and a user hit the
+  wrong side of it on a Banana Pi R4: an app broadcasting MAVLink telemetry
+  from a LAN host, with logging on for a rule that matched it, took the router
+  to the point where wifi clients lost internet until the app stopped. Three
+  things compound, and only the first is obvious.
+
+  A logging rule normally sees one packet per connection, because fw4 accepts
+  established traffic before any rule runs. **One-way UDP never becomes
+  established.** Conntrack leaves a flow in `new` until it sees a reply, so
+  broadcast telemetry, multicast and one-way video run the full ruleset on
+  every single packet and are logged on every single packet. Flow offloading
+  does not save it either, for the same reason: `flow add` wants a reply too.
+
+  Then the bridge multiplies it, by the same mechanism as the `ID=4571` note
+  above: a broadcast is flooded to every port, each port is its own forwarding
+  decision, each writes its own line. 100 packets a second across five ports is
+  500 lines a second.
+
+  Then `printk` charges for each one **in the packet's path**, in softirq, and
+  with a serial console configured, which the filogic images have, the line
+  also goes out of the UART at 115200 baud synchronously. ~120 characters is
+  ~10 ms, so 500 lines a second asks for five seconds of every second. The
+  router is not busy, it is blocked, which is why everything stops rather than
+  merely slowing down. `dmesg -n 4` takes the console out of it without taking
+  anything out of `logread`, since fw4 logs at warning level and the console
+  log level gates the console device rather than the ring buffer. Change only
+  that first field: the filogic kernel is built with
+  `CONFIG_CONSOLE_LOGLEVEL_DEFAULT=15` and boots with `loglevel=8`, so
+  `/proc/sys/kernel/printk` reads `8 7 1 15` there, nothing is filtered at all,
+  and none of the generic `7 4 1 7` advice applies.
+
+  **That the console is the dominant cost is measured, not reasoned.** With the
+  telemetry running and the rule logging, toggling `dmesg -n 8` against
+  `dmesg -n 4` on the R4 moves the network between stalled and full speed and
+  nothing else changes, which isolates the UART write from the `printk`, from
+  the log volume and from this package. Treat the rest of this entry as the
+  explanation of a result rather than as a prediction.
+
+  `fwlive-status` reports the level and the consoles that carry an `E` in
+  `/proc/consoles`, and prints `dmesg -n 4` when a firewall line would reach
+  one. `FWLIVE_PRINTK` and `FWLIVE_CONSOLES` stand in for the two files so the
+  four outcomes are testable off a router. The warning does not wait for the
+  firewall to be logging: it is there to be read before a box is ticked.
+
+  Nothing here is this package's cost, and `max_rate` cannot help: it sheds
+  after the kernel has already written the line. Reading the feed is not free
+  either (every line crosses ubus into `logread -f` and then through awk), so
+  `/etc/init.d/fw-live stop` is what separates the two when someone reports
+  this.

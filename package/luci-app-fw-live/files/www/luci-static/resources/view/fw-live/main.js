@@ -516,6 +516,10 @@ return view.extend({
 			const blind = st['unlogged denies'];
 			if (blind && blind.indexOf('none') !== 0)
 				parts.push(blind);
+			// The log key is always there, so the fix key is what says the
+			// console is costing something.
+			if (st['console fix'])
+				parts.push(_('Console') + ': ' + st['console log']);
 			if (data.dropped)
 				parts.push(_('rate limit has discarded') + ' ' + data.dropped + ' ' + _('events'));
 			statusNode.textContent = parts.join(' \u00b7 ');

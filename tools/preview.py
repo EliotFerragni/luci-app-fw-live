@@ -112,6 +112,10 @@ STATUS = {"status": {
     "event rate": "7.6/s accepted, 3.6/s denied",
     "local prefixes": "6: 192.168.1.1/24, 10.0.30.1/24, 192.168.50.0/24, "
                       "fd00:abc::1/64, ::1/128, fe80::/10",
+    # The state the check exists to catch, so the screenshots carry it.
+    "console log": "level 8 on ttyS0, every firewall log line is written there "
+                   "before the packet moves on",
+    "console fix": "dmesg -n 4",
 }}
 
 # Close enough to LuCI's bootstrap themes to be honest about the layout. The

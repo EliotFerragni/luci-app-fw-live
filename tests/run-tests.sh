@@ -1031,6 +1031,51 @@ kill "$STALE_PID" 2>/dev/null
 wait "$STALE_PID" 2>/dev/null
 
 echo
+echo "console log level"
+
+# The console lines are /proc/consoles as the kernel prints it: fixed width
+# flags with a space where one is unset.
+CONW=$WORK/console
+mkdir -p "$CONW"
+printf 'ttyS0                -W- (EC p a)    4:64\n' > "$CONW/consoles-on"
+printf 'ttynull              -W- ( C    )    0:0\n' > "$CONW/consoles-off"
+printf '8 7 1 15\n' > "$CONW/printk-verbose"
+printf '4 7 1 15\n' > "$CONW/printk-quiet"
+
+console_line() {
+	# $1 printk file, $2 consoles file
+	FWLIVE_RUN=$CONW/run FWLIVE_PIDFILE=$CONW/pidfile \
+		FWLIVE_PRINTK="$1" FWLIVE_CONSOLES="$2" \
+		$RUNSH "$BIN/fwlive-status" 2>/dev/null |
+		grep '^console' | tr '\n' '|'
+}
+
+case "$(console_line "$CONW/printk-verbose" "$CONW/consoles-on")" in
+	*"level 8 on ttyS0"*"console fix:"*"dmesg -n 4"*)
+		ok "a console taking warnings is reported with the command that stops it" ;;
+	*) bad "a console taking warnings is reported with the command that stops it" ;;
+esac
+
+case "$(console_line "$CONW/printk-quiet" "$CONW/consoles-on")" in
+	*"console fix:"*) bad "a console below warning level is left alone" ;;
+	*"level 4 on ttyS0"*) ok "a console below warning level is left alone" ;;
+	*) bad "a console below warning level is left alone" ;;
+esac
+
+case "$(console_line "$CONW/printk-verbose" "$CONW/consoles-off")" in
+	*"console fix:"*) bad "a verbose level with no console registered is left alone" ;;
+	*"no console is taking kernel messages"*)
+		ok "a verbose level with no console registered is left alone" ;;
+	*) bad "a verbose level with no console registered is left alone" ;;
+esac
+
+case "$(console_line "$CONW/absent" "$CONW/consoles-on")" in
+	*"console fix:"*) bad "an unreadable printk is reported unknown rather than guessed" ;;
+	*unknown*) ok "an unreadable printk is reported unknown rather than guessed" ;;
+	*) bad "an unreadable printk is reported unknown rather than guessed" ;;
+esac
+
+echo
 echo "restart leaves nothing behind"
 
 # An upgrade runs stop then start, and stop only asks procd to stop the old

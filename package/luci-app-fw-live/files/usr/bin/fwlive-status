@@ -9,6 +9,8 @@
 
 RUN=${FWLIVE_RUN:-/tmp/fw-live}
 PIDFILE=${FWLIVE_PIDFILE:-/var/run/fw-live.pid}
+PRINTK=${FWLIVE_PRINTK:-/proc/sys/kernel/printk}
+CONSOLES=${FWLIVE_CONSOLES:-/proc/consoles}
 
 ENABLED=1
 ACCEPTS=1
@@ -238,6 +240,38 @@ if [ "$DENIES" = "1" ] && [ "$BLIND_N" -gt 0 ]; then
 	echo "rule logging fix:  ${_fix}uci commit firewall; /etc/init.d/firewall reload"
 elif [ "$DENIES" = "1" ]; then
 	echo "unlogged denies:   none, every rule that refuses traffic also logs it"
+fi
+
+# fw4 logs at warning, level 4, and a message reaches the console only if its
+# level is below the first field, so anything above 4 puts every firewall log
+# line on a console, in the packet's own path. Reported whatever the firewall
+# is logging today: it is there to be read before a rule is switched on.
+CON_LEVEL=""
+[ -r "$PRINTK" ] && CON_LEVEL=$(awk 'NR == 1 { print $1 + 0 }' "$PRINTK")
+case "$CON_LEVEL" in ''|*[!0-9]*) CON_LEVEL="" ;; esac
+
+# The flags are fixed width, a letter per flag set and a space per flag that is
+# not, so the field holds spaces and no column number reaches it. E is enabled.
+CON_NAMES=""
+[ -r "$CONSOLES" ] && CON_NAMES=$(awk '
+	{
+		i = index($0, "(")
+		j = index($0, ")")
+		if (i == 0 || j <= i) next
+		if (index(substr($0, i + 1, j - i - 1), "E") == 0) next
+		printf "%s%s", (n++ ? ", " : ""), $1
+	}
+	END { print "" }' "$CONSOLES")
+
+if [ -z "$CON_LEVEL" ]; then
+	echo "console log:       unknown, $PRINTK is not readable"
+elif [ -z "$CON_NAMES" ]; then
+	echo "console log:       level $CON_LEVEL, no console is taking kernel messages"
+elif [ "$CON_LEVEL" -gt 4 ]; then
+	echo "console log:       level $CON_LEVEL on $CON_NAMES, every firewall log line is written there before the packet moves on"
+	echo "console fix:       dmesg -n 4"
+else
+	echo "console log:       level $CON_LEVEL on $CON_NAMES, which firewall lines do not reach"
 fi
 
 # the buffer

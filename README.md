@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.0.0
+# luci-app-fw-live 1.1.0
 
 [![build](https://github.com/EliotFerragni/luci-app-fw-live/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/EliotFerragni/luci-app-fw-live/actions/workflows/build.yml)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-%23D97757.svg?style=for-the-badge&logo=claudecode&logoColor=white)
@@ -70,13 +70,13 @@ refuses it for being unsigned, use ssh instead.
 
 **Over ssh.** Copy the file to the router, then install it. On 25.12 and newer:
 
-    scp luci-app-fw-live-1.0.0-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.0.0-r1.apk'
+    scp luci-app-fw-live-1.1.0-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.1.0-r1.apk'
 
 On 24.10 and older:
 
-    scp luci-app-fw-live_1.0.0-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.0.0-1_all.ipk'
+    scp luci-app-fw-live_1.1.0-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.1.0-1_all.ipk'
 
 **From the source tree.** If you would rather not use a package at all, copy
 the tree to the router and run `install.sh` on it. This route installs no
@@ -120,11 +120,77 @@ package makes sure you know instead. A rule that refuses traffic without
 logging it is marked in red in Settings, reported by `fwlive-status` and shown
 on the live page, along with the command to fix it.
 
-**Logging costs log volume, not CPU.** OpenWrt's logd keeps a circular buffer
-in RAM, so the real price is a chatty firewall pushing everything else out of
-`logread` before you get to read it. The current rate is on the status line.
-If it is too high, you have three options: log individual rules instead of
-whole zones, set `log_limit` on the zone, or give logd a bigger `log_size`.
+**Logging usually costs log volume rather than CPU.** OpenWrt's logd keeps a
+circular buffer in RAM, so the usual price is a chatty firewall pushing
+everything else out of `logread` before you get to read it. The current rate is
+on the status line. If it is too high, you have three options: log individual
+rules instead of whole zones, set `log_limit` on the zone, or give logd a
+bigger `log_size`.
+
+**At a few hundred lines a second it costs a great deal more than that.** Every
+logged packet is a kernel `printk`, written in that packet's own path before
+the packet moves on. Most OpenWrt devices have a serial console configured,
+whether or not anything is plugged into the header, and on those each line is
+also clocked out of the UART at 115200 baud while the network stack waits for
+it. A line of 120 characters takes about 10 ms that way, so 500 lines a second
+asks for five seconds of every second, and the router stops forwarding for
+everybody until the traffic stops. It does not slow down, it stalls.
+
+**Most of that cost is the console, and one command takes it away:**
+
+    dmesg -n 4
+
+That sets the console log level, the first of the four numbers in
+`/proc/sys/kernel/printk`, and a message reaches the console only if its level
+is below it. fw4 logs at warning, which is level 4, so 4 is the number that
+stops it. The effect is not subtle: on a Banana Pi R4 carrying a broadcast
+telemetry stream that a logging rule matched, toggling between `dmesg -n 8` and
+`dmesg -n 4` moves the network between stalled and full speed, with nothing
+else changed.
+
+Some targets start at the bad end, so read the current value before changing
+it:
+
+    cat /proc/sys/kernel/printk
+
+A mediatek/filogic kernel, the Banana Pi R4 among others, answers `8 7 1 15`.
+It is built with `CONFIG_CONSOLE_LOGLEVEL_DEFAULT=15` and boots with
+`loglevel=8`, and levels only run to 7, so nothing is filtered at all. Other
+targets are quieter to begin with. To keep the change across a reboot, write
+those four numbers back with only the first replaced, which on that example is:
+
+    echo 'kernel.printk=4 7 1 15' >> /etc/sysctl.conf
+
+From the web interface instead, **System → Startup → Local Startup** edits
+`/etc/rc.local`, so a `dmesg -n 4` line there does the same job at the end of
+boot. What will not work is **System → System → Logging → Log output level**,
+which looks like precisely this setting and writes `conloglevel`, an option
+nothing on OpenWrt has read since logd replaced klogd.
+
+Since fw4's lines are ordinary warnings, this silences every other kernel
+warning on the console too. Nothing is lost from `logread`: the level gates the
+console device, not the ring buffer. And it removes the UART write rather than
+the `printk`, so a high enough rate still costs CPU.
+
+You do not have to remember any of this. `fwlive-status` reads the level and
+the registered consoles every time it runs, reports both, and prints the
+command above whenever a firewall log line would reach a console. Settings
+shows the same thing, so the cost is on screen before a rule is switched on
+rather than after.
+
+**What takes a rule to that rate is usually one-way UDP.** fw4 accepts
+established traffic before any rule runs, so an ordinary connection passes a
+logging rule once and is never seen by it again. A stream that never draws a
+reply, such as broadcast telemetry, multicast or a one-way video feed, never
+becomes established, so every packet of it runs the whole ruleset and every
+packet is logged. A broadcast destination multiplies that again: the bridge
+floods the packet to every port, each port is its own forwarding decision, and
+each one writes its own line. Telemetry at 100 packets a second across five
+bridge ports is 500 lines a second, which is the number above.
+
+So check what a rule actually matches before you turn its logging on. If a
+stream like that is in it, narrow the rule so the stream stops matching, or put
+a plain accept for that traffic above it.
 
 ## Naming a rule
 
@@ -346,7 +412,8 @@ the network is.
 
 `max_rate` is a safety valve rather than a tuning knob. If a log rule starts
 matching far more than it should, the excess is dropped and counted instead of
-being allowed to fill RAM.
+being allowed to fill RAM. It guards the buffer, not the router: by the time a
+line reaches this package the kernel has already paid for writing it.
 
 **What counts as local** decides the Direction column and what `ignore_local`
 leaves out. Every address the router holds is found automatically, so both list
@@ -360,8 +427,9 @@ Start here:
 
     fwlive-status
 
-It reports the service, both feeds, the buffer and anything discarded, and if a
-feed is not working it prints the commands to fix it. If that is not enough:
+It reports the service, both feeds, the buffer, the console log level and
+anything discarded, and where something is wrong it prints the command to fix
+it. If that is not enough:
 
 - **Nothing denied appears.** Run `uci show firewall | grep -i log`. If nothing
   comes back, no zone has logging on. If one does, check that the kernel is
@@ -376,6 +444,14 @@ feed is not working it prints the commands to fix it. If that is not enough:
   /tmp/luci-modulecache && /etc/init.d/rpcd restart`.
 - **The page is there but empty.** Run `ubus call luci_fw_live status '{}'`. If
   the object is missing, `logread -e rpcd` says why.
+- **The router stalls while some traffic is running.** A logging rule that a
+  one-way UDP stream matches can log every packet of it, once per bridge port,
+  and each line is written to the serial console while the network stack waits.
+  Try `dmesg -n 4` first, then see
+  [Turning on firewall logging](#turning-on-firewall-logging). To tell the
+  kernel's share of what is left from this package's, run
+  `/etc/init.d/fw-live stop` and try again: what remains is the cost of writing
+  the lines, which no setting here can change.
 
 ## Installed files
 

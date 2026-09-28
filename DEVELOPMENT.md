@@ -162,7 +162,9 @@ before committing.
 The `FWLIVE_` variables are what make this possible: `FWLIVE_RUN` sets the
 spool directory, `FWLIVE_PIDFILE` points `fwlive-status` at a pid file it can
 write, `FWLIVE_LOGREAD` and `FWLIVE_CONNTRACK` put something else behind the
-two feeds, `FWLIVE_BOOT`, `FWLIVE_UPTIME` and `FWLIVE_CLOCK` pin the clock, and
+two feeds, `FWLIVE_PRINTK` and `FWLIVE_CONSOLES` stand in for the two `/proc`
+files the console check reads, `FWLIVE_BOOT`, `FWLIVE_UPTIME` and
+`FWLIVE_CLOCK` pin the clock, and
 `FWLIVE_MAX_RATE`, `FWLIVE_BUFFER_SIZE`, `FWLIVE_IGNORE_LOCAL` and
 `FWLIVE_IGNORE_UNKNOWN` set the defaults used when `/etc/config/fw-live`
 cannot be read. uci wins over all of them on a router.
