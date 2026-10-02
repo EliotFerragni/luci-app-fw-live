@@ -60,15 +60,42 @@ specific to a release, but it has not been run on 25.12 hardware.
 
 ## Install
 
-Take the package for your release from the [Releases](../../releases) page: the
-`.apk` for OpenWrt 25.12 and newer, the `.ipk` for 24.10 and older. Both are
-architecture independent, so the same file works on any target.
+**From the package feed (recommended).** The package is published in a
+[signed OpenWrt feed](https://github.com/EliotFerragni/openwrt-feed). Add it
+once, and the package installs from **System → Software** like any other, and
+new releases show up there as upgrades on their own.
 
-**In LuCI.** Go to **System → Software** and use **Upload Package…**. Pick the
+On OpenWrt 25.12 and newer:
+
+    wget -O /etc/apk/keys/openwrt-feed.pem \
+        https://eliotferragni.github.io/openwrt-feed/keys/openwrt-feed.pem
+    echo "https://eliotferragni.github.io/openwrt-feed/apk/packages.adb" \
+        >> /etc/apk/repositories.d/customfeeds.list
+    apk update
+    apk add luci-app-fw-live
+
+On 24.10 and older:
+
+    wget -O /tmp/feed.pub https://eliotferragni.github.io/openwrt-feed/keys/usign.pub
+    opkg-key add /tmp/feed.pub
+    echo "src/gz eliotferragni https://eliotferragni.github.io/openwrt-feed/opkg" \
+        >> /etc/opkg/customfeeds.conf
+    opkg update
+    opkg install luci-app-fw-live
+
+Read the [feed's README](https://github.com/EliotFerragni/openwrt-feed#setting-it-up)
+for more info.
+
+**From a release file.** Take the package for your release from the
+[Releases](../../releases) page: the `.apk` for OpenWrt 25.12 and newer, the
+`.ipk` for 24.10 and older. Both are architecture independent, so the same file
+works on any target. Installed this way, upgrades are up to you.
+
+In LuCI, go to **System → Software** and use **Upload Package…**. Pick the
 file you downloaded, and LuCI does the rest. If the package manager on 25.12
 refuses it for being unsigned, use ssh instead.
 
-**Over ssh.** Copy the file to the router, then install it. On 25.12 and newer:
+Over ssh, copy the file to the router, then install it. On 25.12 and newer:
 
     scp luci-app-fw-live-1.1.0-r1.apk root@192.168.1.1:/tmp/
     ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.1.0-r1.apk'
