@@ -282,6 +282,13 @@ answer `2 ^ 30` with "Math support is not compiled in". `pow2()` in
 `fwlive-follow` is a loop for that reason. There are no bitwise functions
 either, which is why the IPv4 subnet match is a division rather than a mask.
 
+**No `delete` in the parser.** busybox awk (1.30.1 and 1.36.1, the OpenWrt
+24.10 version, both measured) leaks an array element that is deleted and then
+assigned again. Clearing the trim ring that way grew the log parser by about a
+megabyte a minute on a busy feed, which over weeks is the router's RAM.
+Overwrite slots instead. `tests/run-tests.sh` rejects the word in the parser
+block.
+
 **No single quotes inside the parser.** The awk program in `fwlive-follow`
 lives in a single quoted shell variable, so its `logger` and `mv` calls use
 escaped double quotes. Adding a `'` anywhere in it breaks the script silently

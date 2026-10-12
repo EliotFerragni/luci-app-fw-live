@@ -202,6 +202,22 @@ else
 	echo "$_apos"
 fi
 
+# busybox awk leaks an array element that is deleted and then assigned again,
+# and the parser runs for weeks: a delete in the trim cost it a megabyte a
+# minute on a busy feed. Nothing in the parser needs one.
+_del=$(awk '
+	$0 == "PARSER=\047" { inside = 1; next }
+	inside && $0 == "\047" { inside = 0; next }
+	inside { seen++; l = $0; sub(/#.*/, "", l); if (l ~ /(^|[^A-Za-z_])delete[ \t(]/) print "    line " FNR ": " $0 }
+	END { if (seen < 100) print "    the parser block was not found, this check is not checking anything" }
+' "$BIN/fwlive-follow")
+if [ -z "$_del" ]; then
+	ok "the parser deletes no array element, which busybox awk would leak"
+else
+	bad "delete inside the long running parser"
+	echo "$_del"
+fi
+
 # ucode drops the backslash from a \] inside a bracket expression, so the
 # escaped spelling closes the class early and leaves a pattern that matches
 # nothing. A literal closing bracket has to be written first instead. This is

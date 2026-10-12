@@ -1,4 +1,4 @@
-# luci-app-fw-live 1.1.0
+# luci-app-fw-live 1.1.1
 
 [![build](https://github.com/EliotFerragni/luci-app-fw-live/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/EliotFerragni/luci-app-fw-live/actions/workflows/build.yml)
 ![Claude Code](https://img.shields.io/badge/Claude%20Code-%23D97757.svg?style=for-the-badge&logo=claudecode&logoColor=white)
@@ -97,13 +97,13 @@ refuses it for being unsigned, use ssh instead.
 
 Over ssh, copy the file to the router, then install it. On 25.12 and newer:
 
-    scp luci-app-fw-live-1.1.0-r1.apk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.1.0-r1.apk'
+    scp luci-app-fw-live-1.1.1-r1.apk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'apk add --allow-untrusted /tmp/luci-app-fw-live-1.1.1-r1.apk'
 
 On 24.10 and older:
 
-    scp luci-app-fw-live_1.1.0-1_all.ipk root@192.168.1.1:/tmp/
-    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.1.0-1_all.ipk'
+    scp luci-app-fw-live_1.1.1-1_all.ipk root@192.168.1.1:/tmp/
+    ssh root@192.168.1.1 'opkg install /tmp/luci-app-fw-live_1.1.1-1_all.ipk'
 
 **From the source tree.** If you would rather not use a package at all, copy
 the tree to the router and run `install.sh` on it. This route installs no

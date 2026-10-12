@@ -268,8 +268,13 @@ function write_stats() {
 # Keep the newest buffer_size lines by rewriting the spool and renaming it in.
 # The writer closes the spool between events, so it holds no stale descriptor
 # and a reader never sees a half written file. An in place truncate would.
+#
+# _ring is never cleared, because busybox awk leaks every element deleted and
+# then assigned again: clearing it here cost the parser about a megabyte a
+# minute on a busy feed. Nothing stale can be read back, since a spool of up
+# to keep lines returns before the ring is used and a longer one overwrites
+# every slot first.
 function trim(   l, n, i) {
-	for (i = 0; i < keep; i++) delete _ring[i]
 	n = 0
 	while ((getline l < spool) > 0) { _ring[n % keep] = l; n++ }
 	close(spool)
