@@ -375,6 +375,23 @@ check "the newest kept event is the last one in" \
 	"$(tail -n 1 "$RUN/events.ct" | cut -f2)" "1000"
 check "nothing is lost or duplicated" "$((KEPT + TRIMMED))" "1000"
 
+# The feed loop starts a new parser every time its reader exits, and each one
+# inherits the spool. One that dies before trim_every events must still not
+# let it grow, and must not start seq again from 0 under a page's cursor.
+rm -f "$RUN/events.ct" "$RUN/stats.ct"
+flood 150 "$WORK/flood.txt"
+for _i in 1 2 3 4 5 6; do
+	FWLIVE_MAX_RATE=0 FWLIVE_BUFFER_SIZE=300 parse ct "$WORK/flood.txt"
+done
+check "parsers that each die before a trim still bound the spool" \
+	"$(wc -l < "$RUN/events.ct" | tr -d ' ')" "450"
+check "seq carries on across parsers" \
+	"$(tail -n 1 "$RUN/events.ct" | cut -f2)" "900"
+check "and is never reused" \
+	"$(cut -f2 "$RUN/events.ct" | sort -n | uniq -d | wc -l | tr -d ' ')" "0"
+check "the trimmed count carries on too" \
+	"$(awk '$1 == "trimmed" { print $2 }' "$RUN/stats.ct")" "450"
+
 echo
 echo "a clock corrected after the service started"
 

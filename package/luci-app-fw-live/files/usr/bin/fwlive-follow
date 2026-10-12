@@ -273,6 +273,7 @@ function trim(   l, n, i) {
 	n = 0
 	while ((getline l < spool) > 0) { _ring[n % keep] = l; n++ }
 	close(spool)
+	if (n > 0) { split(_ring[(n - 1) % keep], _f, "\t"); last_seq = _f[2] + 0 }
 	if (n <= keep) return
 	trimmed += n - keep
 	for (i = 0; i < keep; i++)
@@ -364,6 +365,23 @@ BEGIN {
 	# than being stamped under whatever the shell saw at startup.
 	up_sec = -1
 	load_subnets()
+	# The feed loop starts a new parser whenever its reader exits, which
+	# conntrack does on a buffer overrun and logread does when logd restarts,
+	# so a parser usually inherits a spool rather than starting one. Starting
+	# seq again from 0 would put every new event behind the cursor a page
+	# holds, and starting the trim count again from 0 means a parser that
+	# dies before trim_every events never trims: the spool then grows by up
+	# to that much per restart, without bound, in RAM.
+	while ((getline _l < stats) > 0) {
+		split(_l, _s, " ")
+		if (_s[1] == "shed") shed = _s[2] + 0
+		else if (_s[1] == "trimmed") trimmed = _s[2] + 0
+		else if (_s[1] == "merged") merged = _s[2] + 0
+	}
+	close(stats)
+	last_seq = 0
+	trim()
+	seq = last_seq
 	write_stats()
 	# Make sure the spool exists even for a feed that never produces an event,
 	# so a reader finds an empty file rather than a missing one. The service

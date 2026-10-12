@@ -430,6 +430,14 @@ boring for that reason.
 
 Worth not repeating:
 
+- **A parser that started every count from zero**, which let the spools grow
+  without bound over weeks of uptime. The feed loop starts a new parser
+  whenever its reader exits, and the trim ran every `trim_every` events
+  counted by that parser alone, so one that died before 200 events never
+  trimmed and each restart left up to 199 more lines in RAM. `seq` restarted
+  from 0 the same way, which put new events behind the cursor of any open
+  page. A parser now resumes from the spool it inherits: it trims at startup,
+  takes `seq` from the newest line and its counters from the stats file.
 - `2 ^ (32 - len)` in awk, which busybox answers with "Math support is not
   compiled in" on builds without libm.
 - Parsing `SPT=` and `DPT=` out of the header an ICMP error quotes, which put
